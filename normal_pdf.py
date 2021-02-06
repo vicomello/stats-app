@@ -11,7 +11,7 @@ from scipy.stats import norm
 #%% config
 
 st.set_page_config(
-    page_title="your_title",
+    page_title="Normal distribution",
     layout="wide",
     initial_sidebar_state="auto",
 )
