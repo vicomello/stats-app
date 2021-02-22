@@ -66,3 +66,5 @@ fig = (
     .interactive()
 )
 st.altair_chart(fig, use_container_width=True)
+
+#%%
