@@ -48,7 +48,7 @@ st.write("Simulating and visualizing data.")
 #%% simulate and plot data
 
 n1 = 100
-mu1 = 100
+mu1 = 0
 sd1 = 30
 
 n2 = 40
@@ -57,6 +57,8 @@ sd2 = 15
 
 x1 = utils.rand_norm_fixed(n1, mu1, sd1)
 x2 = utils.rand_norm_fixed(n2, mu2, sd2)
+print(np.std(x1))
+print(np.mean(x1))
 
 c1 = ["control"] * len(x1)
 c2 = ["drug"] * len(x2)
@@ -65,6 +67,9 @@ x1.extend(x2)
 c1.extend(c2)
 
 df = pd.DataFrame({"condition": c1, "bp": x1})
+
+
+np.array([1., 2., 3.]) * 3.0 + 3.0
 
 
 #%% plot and display
