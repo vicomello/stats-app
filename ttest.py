@@ -37,7 +37,7 @@ st.write("#")
 add_selectbox = st.sidebar.selectbox("Learn more about...", ("a", "b", "c"))
 
 #%% setting columns 
-col1, col2, col4 = st.beta_columns([1.8,0.3, 3.6])
+col1, col2, col4 = st.beta_columns([1.8, 0.3, 3.6])
 
 #%% setting sliders
 with col1:
@@ -51,9 +51,7 @@ with col1:
 #%% generate and draw data points
 
 points = utils.rand_norm_fixed(n, mean, sd)
-x_list = list()
-for i in range(n): x_list.append(0)
-data_points = pd.DataFrame({'y': points,'x': x_list})
+data_points = pd.DataFrame({'y': points,'x': 0})
 # setting points in graph
 fig1 = alt.Chart(data_points).mark_circle(size=20, color="#0000FF").encode(
     x = 'x',
@@ -100,43 +98,5 @@ with col4:
     
 ttest = pg.ttest(points, 0).round(2)
 st.write(ttest)
-
-
-#%% equations
-#st.markdown("#")
-#eq1 = r"y = b_{0} + b_{1}x"
-#st.latex(eq1)
-
-
-#delta_x = np.diff(conds_recoded)[0]
-#delta_y = m2 - m1
-
-#eq1 = r"""
-#    slope = b_1 = 
-#    \frac{{\Delta} y}{{\Delta} x} = 
-#    \frac{y_{treatment} - y_{control}}{x_{treatment} - x_{control}} = 
-#    \frac{m2 - m1}{x2 - x1} = 
-#    \frac{delta_y}{delta_x} = 
-#    result
-#    """
-#eq1 = eq1.replace("m2", f"{m2}").replace("m1", f"{m1}")
-#eq1 = eq1.replace("x2", f"{conds_recoded[1]}").replace("x1", f"{conds_recoded[0]}")
-#eq1 = eq1.replace("delta_y", f"{delta_y}").replace("delta_x", f"{delta_x}")
-#eq1 = eq1.replace("result", f"{delta_y / delta_x}")
-
-#st.latex(eq1)
-
-#eq4 = f"y = b_0 + {delta_y/delta_x} x"
-#st.latex(eq4)
-
-#eq5 = f"{m2} = b_0 + {delta_y/delta_x}({conds_recoded[1]})"
-#st.latex(eq5)
-
-#eq6 = f"{m2} = b_0 + {delta_y/delta_x * conds_recoded[1]}"
-#st.latex(eq6)
-
-#eq7 = f"b_0 = {m2} - {delta_y/delta_x * conds_recoded[1]}"
-#st.latex(eq7)
-
-#eq8 = f"b_0 = {m2 - delta_y/delta_x * conds_recoded[1]} = intercept"
-#st.latex(eq8)
+# TODO delete tails and CI 
+#BUG 
