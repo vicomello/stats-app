@@ -50,17 +50,20 @@ st.markdown(
 st.latex("y_i = b_0 + \epsilon_i")
 
 st.markdown(
-    "where $y_i$ are the data points, $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$."
+    "where $y_i$ are the data points, $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. If you want to predict any value $y_i$, use the mean value ($b_0$) of your sample."
+)
+st.markdown(
+    "**This model says that the best predictor of $y_i$ is $b_0$, which is the intercept or the mean of all the data points.**"
 )
 st.markdown(
     "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
 )
-st.markdown("#")
+st.markdown("###")
 
 
 #%% make columns/containers
 
-col1, cola, col2, colb, col3 = st.beta_columns(
+col1, _, col2, _, col3 = st.beta_columns(
     [0.8, 0.05, 0.8, 0.05, 1.3]
 )  # ratios of widths
 
@@ -83,13 +86,13 @@ slider_mean_params = [
 slider_sd_params = [
     "Standard deviation (SD) or 'spread'",
     0.1,
-    50.0,
+    100.0,
     13.8,
     0.1,
 ]
 
 with col2:
-    st.markdown("Drag the sliders to simulate data")
+    st.markdown("Drag the sliders to simulate some data")
     n = st.slider(*slider_n_params)
     slider_n_params[3] = n
     mean = st.slider(*slider_mean_params)
@@ -105,6 +108,8 @@ df1["Happiness"] = df1["Happiness"].round(1)
 df1["i"] = np.arange(1, df1.shape[0] + 1)
 df1["Mean"] = df1["Happiness"].mean().round(1)
 df1["Residual"] = df1["Happiness"] - df1["Mean"]
+for i in df1.itertuples():
+    df1.loc[i.Index, "Model"] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
 # t-test
 res = pg.ttest(df1["Happiness"], 0)
@@ -122,6 +127,7 @@ y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
 y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
 y_domain = [y_min, y_max]
 
+
 fig1 = (
     alt.Chart(df1)
     .mark_circle(size=89, color="#57106e", opacity=0.8)
@@ -136,7 +142,7 @@ fig1 = (
             scale=alt.Scale(domain=y_domain),
             axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
         ),
-        tooltip=["Happiness", "i", "Mean", "Residual"],
+        tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
     )
     # .properties(width=144, height=377)
     # .properties(title="General linear model")
@@ -200,12 +206,14 @@ else:
     bftext = "Bayes factor = "
 res_list.append(bf)
 res_list.append(res["cohen-d"].round(2)[0])
-res_list.append(res["power"].round(2)[0] * 100)
+res_list.append(res["power"].round(2)[0])
 
 st.markdown("### One-sample t-test results")
 
 st.write(
-    "t(",
+    "$b_0$ = ",
+    np.round(mean, 2),
+    ", t(",
     res_list[0],
     ") = ",
     res_list[1],
@@ -215,18 +223,26 @@ st.write(
     bf,
     "Cohen's d effect size = ",
     res_list[4],
-    "power = ",
+    ", power = ",
     res_list[5],
-    "%",
 )
 
 
 # %% container derivation
 
 st.markdown("####")
-my_expander = st.beta_expander("Click to see derivation")
+my_expander = st.beta_expander("Click to see calculations")
 with my_expander:
-    st.markdown("Latex equations here")
+    eq1 = r"t = \frac{\bar{y} - \mu_{0}}{SE_{\bar{y}}} = \frac{MEAN - 0}{STERR} = TVAL"
+    eq1 = (
+        eq1.replace("MEAN", str(mean))
+        .replace("STERR", str(np.round(sd / np.sqrt(n), 2)))
+        .replace("TVAL", str(res_list[1]))
+    )
+    st.latex(eq1)
+
+    st.latex(r"SE_{\bar{y}} = \frac{SD}{\sqrt{N}}")
+
     st.markdown("####")
 
 # %% show code
@@ -234,16 +250,29 @@ with my_expander:
 st.markdown("####")
 my_expander = st.beta_expander("Click to see Python and R code")
 with my_expander:
-    st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
-    st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
+    st.markdown(
+        "The one-sample t-test is equivalent to a linear regression with only the intercept. Thus, the following functions/methods in Python and R will return the same results."
+    )
+
     st.markdown("Python: `pingouin.ttest(y, 0)`  # t-test against 0")
+    st.markdown("Python: `scipy.stats.ttest_1samp(y, 0)`  # t-test against 0")
+    st.markdown(
+        'Python: `statsmodels.formula.api.ols(formula="y ~ 1", data=dataframe).fit()`  # linear model with only intercept term'
+    )
     st.markdown("####")
 
+    st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
+    st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
+    st.markdown("####")
 
 # %% container prompts
 
 st.markdown("####")
 my_expander = st.beta_expander("Test your intuition")
 with my_expander:
-    st.markdown("questions here")
-    st.markdown("####")
+    st.markdown("How does changing the sample size ($N$) change the results?")
+    st.markdown("answer")
+    st.markdown("######")
+    st.markdown("Question2 ")
+    st.markdown("answer")
+    st.markdown("######")
