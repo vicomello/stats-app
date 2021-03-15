@@ -27,11 +27,11 @@ add_selectbox = st.sidebar.selectbox(
 
 st.title("One-sample t-test")
 st.markdown(
-    "We use the **one-sample t-test** when we have a **sample** (i.e., a set of data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value**."
+    "We use the **one-sample t-test** when we have a **sample** (i.e., a set of data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value** (let's assume this value is 0, but it can be any value)."
 )
 
 st.markdown(
-    "For example, on 10 different days, you rate and record your own happiness using a scale that ranges from -10 to 10 (-10: miserable, 0: neutral, 10: ecstatic). You can use the one-sample t-test to see whether you're generally happy or sad. That is, you test whether you mean happiness over the last 10 days is bigger or smaller than 0 (neutral)."
+    "For example, on 5 different days, you rate and record your own happiness using a scale that ranges from -10 to 10 (-10: miserable, 0: neutral, 10: ecstatic). You can use the one-sample t-test to see whether you're generally happy or sad. That is, you test whether you mean happiness over the last 10 days is bigger or smaller than 0 (neutral)."
 )
 
 # %% container for examples
@@ -50,10 +50,10 @@ st.markdown(
 st.latex("y_i = b_0 + \epsilon_i")
 
 st.markdown(
-    "where $y_i$ are the data points, $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. If you want to predict any value $y_i$, use the mean value ($b_0$) of your sample."
+    "where $y_i$ are the data points, $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ and $\epsilon_i$ (residuals) are shown in the dataframe below."
 )
 st.markdown(
-    "**This model says that the best predictor of $y_i$ is $b_0$, which is the intercept or the mean of all the data points.**"
+    "**This model says that the best predictor of $y_i$ is $b_0$, which is the intercept or the mean of all the data points.** If you want to predict any value $y_i$, use the mean value ($b_0$) of your sample."
 )
 st.markdown(
     "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
@@ -73,7 +73,7 @@ slider_n_params = [
     "Number of data points (sample size, N)",  # label
     2,  # min
     200,  # max
-    10,  # start value
+    5,  # start value
     1,  # step
 ]
 slider_mean_params = [
@@ -116,7 +116,7 @@ res = pg.ttest(df1["Happiness"], 0)
 df1["d"] = res["cohen-d"][0]
 
 with col3:
-    st.markdown("Sample data (each row is one simulated data point $i$)")
+    st.markdown("Simulated sample data (each row is one simulated data point $y_i$)")
     st.write(df1[["i", "Happiness", "Mean", "Residual"]].round(2))
 
 
@@ -181,7 +181,7 @@ finalfig = fig3 + fig2 + fig1
 finalfig.configure_axis(grid=False)
 finalfig.title = hline_b0["Model"][0]
 with col1:
-    st.markdown("General linear model")
+    st.markdown("General linear model (interactive figure)")
     st.altair_chart(finalfig, use_container_width=True)
 
 #%% show t test results
@@ -221,6 +221,7 @@ st.write(
     pval,
     f", {bftext}",
     bf,
+    ", ",
     "Cohen's d effect size = ",
     res_list[4],
     ", power = ",
