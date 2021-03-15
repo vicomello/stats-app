@@ -204,8 +204,6 @@ res_list.append(res["power"].round(2)[0] * 100)
 
 st.markdown("### One-sample t-test results")
 
-# st.markdown(f"- t({res_list[0]}) = {res_list[1]}, {res_list[2]}, {res_list[3]}")
-
 st.write(
     "t(",
     res_list[0],
@@ -236,9 +234,9 @@ with my_expander:
 st.markdown("####")
 my_expander = st.beta_expander("Click to see Python and R code")
 with my_expander:
-    st.markdown("R: `lm(y ~ 1)`")
-    st.markdown("R: `t.test(y, mu = 0)`")
-    st.markdown("Python: `pingouin.ttest(y, 0)`")
+    st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
+    st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
+    st.markdown("Python: `pingouin.ttest(y, 0)`  # t-test against 0")
     st.markdown("####")
 
 
