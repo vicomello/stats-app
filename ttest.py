@@ -60,12 +60,7 @@ fig1 = alt.Chart(data_points).mark_circle(size=20, color="#0000FF").encode(
 
 #%% generating line graph for mean
 
-x_values = list()
-mean_list = list()
-for i in range(-5,6): 
-    x_values.append(i)
-    mean_list.append(mean)
-data_line = pd.DataFrame({'x':x_values,'y':mean_list})
+data_line = pd.DataFrame({'x':np.linspace(-5,5),'y':mean})
 fig2 = alt.Chart(data_line).mark_line().encode(
     x='x',
     y=alt.Y('y', scale=alt.Scale(domain=(-30,30)))
@@ -95,8 +90,5 @@ with col4:
     eq2 = eq2.replace("b_{0}", f"{mean}").replace("b_{1}x","0")
     st.latex(eq2)
     st.write("T-test results")
-    
-ttest = pg.ttest(points, 0).round(2)
-st.write(ttest)
-# TODO delete tails and CI 
-#BUG 
+    ttest = pg.ttest(points, 0).round(2).drop(['tail','CI95%'], axis=1)
+    st.write(ttest)
