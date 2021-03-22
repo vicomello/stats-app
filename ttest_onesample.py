@@ -72,22 +72,22 @@ col1, _, col2, _, col3 = st.beta_columns(
 slider_n_params = [
     "Number of data points (sample size, N)",  # label
     2,  # min
-    200,  # max
-    5,  # start value
+    50,  # max
+    25,  # start value
     1,  # step
 ]
 slider_mean_params = [
     "Sample mean",
-    -50.0,
-    50.0,
-    5.00,
+    -5.0,
+    5.0,
+    2.0,
     0.1,
 ]
 slider_sd_params = [
     "Standard deviation (SD) or 'spread'",
     0.1,
-    100.0,
-    13.8,
+    10.0,
+    8.0,
     0.1,
 ]
 
@@ -125,12 +125,12 @@ with col3:
 x_domain = [-0.1, 0.1]
 y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
 y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
-y_domain = [y_min, y_max]
-
+#y_domain = [y_min, y_max]
+y_domain = [-40,40]
 
 fig1 = (
     alt.Chart(df1)
-    .mark_circle(size=89, color="#57106e", opacity=0.8)
+    .mark_circle(size=(89/np.sqrt(n))*2, color="#57106e", opacity=0.6)
     .encode(
         x=alt.X(
             "Rating:Q",
