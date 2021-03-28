@@ -27,50 +27,31 @@ add_selectbox = st.sidebar.selectbox(
 
 st.title("One-sample t-test")
 st.markdown(
-    "We use the **one-sample t-test** when we have a **sample** (i.e., a set of data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value** (let's assume this value is 0, but it can be any value)."
+    "We use the **one-sample t-test** when we have a **sample** (i.e., a set of $N$ data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value** (it can be any value, but let's assume it's 0 here)."
 )
-
+st.markdown("## Are you happy or sad?")
 st.markdown(
-    "For example, on 5 different days, you rate and record your own happiness using a scale that ranges from -10 to 10 (-10: miserable, 0: neutral, 10: ecstatic). You can use the one-sample t-test to see whether you're generally happy or sad. That is, you test whether you mean happiness over the last 10 days is bigger or smaller than 0 (neutral)."
+    "You want to know whether you're happy or sad in general, so you recorded your own happiness using a 10-point scale, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
 )
-
-# %% container for examples
-
-my_expander = st.beta_expander("Click for more examples")
-with my_expander:
-    st.markdown("A few more short examples here.")
-    st.markdown("####")
-
-# %% equations
-
+st.markdown(
+    "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean of those scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
+)
+st.markdown("## Interactive app")
+st.markdown(
+    "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/Generalized_linear_model) for the one-sample t-test (more explanation provided below). For now, change the values in the sliders below, examine the (simulated) dataframe, and hover over the data points on the interactive figure to understand this statistical test. To reset to the default values, refresh the page."
+)
 st.markdown("####")
-st.markdown(
-    "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/Generalized_linear_model) is following linear equation:"
-)
-st.latex("y_i = b_0 + \epsilon_i")
-
-st.markdown(
-    "where $y_i$ are the data points, $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ and $\epsilon_i$ (residuals) are shown in the dataframe below."
-)
-st.markdown(
-    "**This model says that the best predictor of $y_i$ is $b_0$, which is the intercept or the mean of all the data points.** If you want to predict any value $y_i$, use the mean value ($b_0$) of your sample."
-)
-st.markdown(
-    "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
-)
-st.markdown("###")
-
 
 #%% make columns/containers
 
 col1, _, col2, _, col3 = st.beta_columns(
-    [0.8, 0.05, 0.8, 0.05, 1.3]
-)  # ratios of widths
+    [0.8, 0.05, 0.8, 0.05, 1.3]  # ratios of widths
+)
 
 #%% create sliders
 
 slider_n_params = [
-    "Number of data points (sample size, N)",  # label
+    "Sample size (N, or no. of data points)",  # label
     2,  # min
     50,  # max
     25,  # start value
@@ -84,7 +65,7 @@ slider_mean_params = [
     0.1,
 ]
 slider_sd_params = [
-    "Standard deviation (SD) or 'spread'",
+    'Standard deviation (SD) or "spread"',
     0.1,
     10.0,
     8.0,
@@ -92,21 +73,22 @@ slider_sd_params = [
 ]
 
 with col2:
-    st.markdown("Drag the sliders to simulate some data")
+    # st.markdown("Change the values to simulate new data")
     n = st.slider(*slider_n_params)
     slider_n_params[3] = n
+    st.write("Degrees of freedom ($N - 1$): ", n - 1)
     mean = st.slider(*slider_mean_params)
     slider_mean_params[3] = mean
+    st.write("Mean = $b_0$ = intercept = ", mean)
     sd = st.slider(*slider_sd_params)
     slider_sd_params[3] = sd
-    st.write("N, mean, SD: ", n, ",", mean, ",", sd)
+    # st.write("N, mean, SD: ", n, ",", mean, ",", sd)
 
 # %% create/show dataframe
 
 df1 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n, mean, sd), "Rating": 0})
-df1["Happiness"] = df1["Happiness"].round(1)
 df1["i"] = np.arange(1, df1.shape[0] + 1)
-df1["Mean"] = df1["Happiness"].mean().round(1)
+df1["Mean"] = df1["Happiness"].mean()
 df1["Residual"] = df1["Happiness"] - df1["Mean"]
 for i in df1.itertuples():
     df1.loc[i.Index, "Model"] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
@@ -116,21 +98,23 @@ res = pg.ttest(df1["Happiness"], 0)
 df1["d"] = res["cohen-d"][0]
 
 with col3:
-    st.markdown("Simulated sample data (each row is one simulated data point $y_i$)")
-    st.write(df1[["i", "Happiness", "Mean", "Residual"]].round(2))
+    # st.markdown("Simulated sample data (each row is one simulated data point $y_i$)")
+    st.dataframe(
+        df1[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"), height=360
+    )
 
 
 #%% generate and draw data points
 
 x_domain = [-0.1, 0.1]
-y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
-y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
-#y_domain = [y_min, y_max]
-y_domain = [-40,40]
+# y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
+# y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
+# y_domain = [y_min, y_max]
+y_domain = [-40, 40]
 
 fig1 = (
     alt.Chart(df1)
-    .mark_circle(size=(89/np.sqrt(n))*2, color="#57106e", opacity=0.6)
+    .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#57106e", opacity=0.6)
     .encode(
         x=alt.X(
             "Rating:Q",
@@ -172,7 +156,7 @@ fig3 = (
     alt.Chart(pd.DataFrame({"y": [0]}))
     .mark_rule(size=1, color="#000004", opacity=0.8, strokeDash=[3, 3])
     .encode(y=alt.Y("y:Q", axis=alt.Axis(title="")))
-    # .properties(width=233, height=377)
+    .properties(height=377)
 )
 
 #%% combine figures
@@ -181,59 +165,53 @@ finalfig = fig3 + fig2 + fig1
 finalfig.configure_axis(grid=False)
 finalfig.title = hline_b0["Model"][0]
 with col1:
-    st.markdown("General linear model (interactive figure)")
+    # st.markdown("General linear model (interactive figure)")
     st.altair_chart(finalfig, use_container_width=True)
 
-#%% show t test results
+#%% show t test results (optional)
 
-st.markdown("####")
-res_list = []
-res_list.append(res["dof"].round(0)[0])  # df
-res_list.append(res["T"].round(2)[0])
-p = np.round(res["p-val"][0], 3)
-if p < 0.001:
-    ptext = "p < "
-    pval = 0.001
-else:
-    ptext = "p = "
-    pval = p
-res_list.append(pval)
-bf = np.round(float(res["BF10"][0]), 2)
-if bf > 10000:
-    bftext = "Bayes factor > "
-    bf = 10000
-else:
-    bftext = "Bayes factor = "
-res_list.append(bf)
-res_list.append(res["cohen-d"].round(2)[0])
-res_list.append(res["power"].round(2)[0])
-
-st.markdown("### One-sample t-test results")
-
-st.write(
-    "$b_0$ = ",
-    np.round(mean, 2),
-    ", t(",
-    res_list[0],
-    ") = ",
-    res_list[1],
-    f", {ptext}",
-    pval,
-    f", {bftext}",
-    bf,
-    ", ",
-    "Cohen's d effect size = ",
-    res_list[4],
-    ", power = ",
-    res_list[5],
-)
-
-
-# %% container derivation
-
-st.markdown("####")
-my_expander = st.beta_expander("Click to see calculations")
+my_expander = st.beta_expander("Click to see more results")
 with my_expander:
+    res_list = []
+    res_list.append(res["dof"].round(0)[0])  # df
+    res_list.append(res["T"].round(2)[0])
+    p = np.round(res["p-val"][0], 3)
+    if p < 0.001:
+        ptext = "p < "
+        pval = 0.001
+    else:
+        ptext = "p = "
+        pval = p
+    res_list.append(pval)
+    bf = np.round(float(res["BF10"][0]), 2)
+    if bf > 10000:
+        bftext = "Bayes factor > "
+        bf = 10000
+    else:
+        bftext = "Bayes factor = "
+    res_list.append(bf)
+    res_list.append(res["cohen-d"].round(2)[0])
+    res_list.append(res["power"].round(2)[0])
+
+    st.write(
+        # "$b_0$ = ",
+        # np.round(mean, 2),
+        # ", t(",
+        "t(",
+        res_list[0],
+        ") = ",
+        res_list[1],
+        f", {ptext}",
+        pval,
+        f", {bftext}",
+        bf,
+        ", ",
+        "Cohen's d effect size = ",
+        res_list[4],
+        ", statistical power = ",
+        res_list[5],
+    )
+
     eq1 = r"t = \frac{\bar{y} - \mu_{0}}{SE_{\bar{y}}} = \frac{MEAN - 0}{STERR} = TVAL"
     eq1 = (
         eq1.replace("MEAN", str(mean))
@@ -241,14 +219,35 @@ with my_expander:
         .replace("TVAL", str(res_list[1]))
     )
     st.latex(eq1)
-
     st.latex(r"SE_{\bar{y}} = \frac{SD}{\sqrt{N}}")
 
-    st.markdown("####")
+# %% container derivation
+
+
+# %% equations
+
+st.markdown("## General linear model")
+st.markdown(
+    "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/Generalized_linear_model) is following linear equation:"
+)
+eq1 = "y_i = b_0 + \epsilon_i"
+st.latex(eq1)
+# st.latex(eq1.replace("b_0", str(mean)))
+
+st.markdown(
+    "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ and $\epsilon_i$ (residuals) are shown in the dataframe below."
+)
+st.write(
+    "This model says that the **best predictor of $y_i$ is $b_0$**, which is the **intercept** or the **mean** of all the data points ($b_0$ =",
+    mean,
+    "). If you want to predict any value $y_i$, use the mean ($b_0$) of your sample.",
+)
+st.markdown(
+    "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
+)
 
 # %% show code
 
-st.markdown("####")
 my_expander = st.beta_expander("Click to see Python and R code")
 with my_expander:
     st.markdown(
@@ -264,11 +263,9 @@ with my_expander:
 
     st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
     st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
-    st.markdown("####")
 
 # %% container prompts
 
-st.markdown("####")
 my_expander = st.beta_expander("Test your intuition")
 with my_expander:
     st.markdown("How does changing the sample size ($N$) change the results?")
