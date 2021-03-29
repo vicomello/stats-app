@@ -31,10 +31,10 @@ st.markdown(
 )
 st.markdown("## Are you happy or sad?")
 st.markdown(
-    "You want to know whether you're happy or sad in general, so you recorded your own happiness using a 10-point scale, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
+    "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
 )
 st.markdown(
-    "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean of those scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
+    "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
 )
 st.markdown("## Interactive app")
 st.markdown(
@@ -58,7 +58,7 @@ slider_n_params = [
     1,  # step
 ]
 slider_mean_params = [
-    "Sample mean",
+    "Sample mean (average)",
     -5.0,
     5.0,
     2.0,
@@ -72,7 +72,7 @@ slider_sd_params = [
     0.1,
 ]
 
-with col2:
+with col1:
     # st.markdown("Change the values to simulate new data")
     n = st.slider(*slider_n_params)
     slider_n_params[3] = n
@@ -88,8 +88,10 @@ with col2:
 
 df1 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n, mean, sd), "Rating": 0})
 df1["i"] = np.arange(1, df1.shape[0] + 1)
-df1["Mean"] = df1["Happiness"].mean()
+df1["Happiness"] = df1["Happiness"].round(2)
+df1["Mean"] = df1["Happiness"].mean().round(2)
 df1["Residual"] = df1["Happiness"] - df1["Mean"]
+df1["Residual"] = df1["Residual"].round(2)
 for i in df1.itertuples():
     df1.loc[i.Index, "Model"] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
@@ -164,13 +166,13 @@ fig3 = (
 finalfig = fig3 + fig2 + fig1
 finalfig.configure_axis(grid=False)
 finalfig.title = hline_b0["Model"][0]
-with col1:
+with col2:
     # st.markdown("General linear model (interactive figure)")
     st.altair_chart(finalfig, use_container_width=True)
 
 #%% show t test results (optional)
 
-my_expander = st.beta_expander("Click to see more results")
+my_expander = st.beta_expander("Click to see detailed results")
 with my_expander:
     res_list = []
     res_list.append(res["dof"].round(0)[0])  # df
@@ -221,6 +223,16 @@ with my_expander:
     st.latex(eq1)
     st.latex(r"SE_{\bar{y}} = \frac{SD}{\sqrt{N}}")
 
+    st.write(
+        """
+    * $t$: t-statistic (degrees of freedom in brackets)
+    * $p$: probability probability of obtaining results at least as extreme as what we have observed assuming the null hypothesis is correct
+    * Bayes factor: relative evidence for the tested model over the null model
+    * Cohen's d effect size: a common effect size metric 
+    * statistical power: probability of detecting an effect assuming it exists
+    """
+    )
+
 # %% container derivation
 
 
@@ -232,18 +244,21 @@ st.markdown(
 )
 eq1 = "y_i = b_0 + \epsilon_i"
 st.latex(eq1)
-# st.latex(eq1.replace("b_0", str(mean)))
+st.latex(eq1.replace("b_0", str(mean)))
 
 st.markdown(
-    "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ and $\epsilon_i$ (residuals) are shown in the dataframe below."
+    "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ (happiness scores for each day) and $\epsilon_i$ (residuals for each day) are shown in the dataframe above."
 )
 st.write(
-    "This model says that the **best predictor of $y_i$ is $b_0$**, which is the **intercept** or the **mean** of all the data points ($b_0$ =",
+    "This model says that the **best predictor of $y_i$ is $b_0$**, which is the **intercept** or the **mean** (or average) of all the data points ($b_0$ =",
     mean,
-    "). If you want to predict any value $y_i$, use the mean ($b_0$) of your sample.",
+    "). So if you want to predict any value $y_i$, use the mean of your sample.",
+)
+st.write(
+    "Since this model is very simple (i.e., predict every $y_i$ by assuming every $y_i$ equals the mean value of the sample: $y_i = b_0$), it can result in bad predictions. For example, your mean happiness is 2.0 ($b_0 = 2.0$), but on day 13, your score was 27 ($y_{13} = 27$). That is, $27 = 2.0 + \epsilon_{13}$, where $\epsilon_{13} = 25$ is the residual for that day—it's how wrong the model was."
 )
 st.markdown(
-    "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
+    "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear model or equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
 )
 
 # %% show code
@@ -254,8 +269,12 @@ with my_expander:
         "The one-sample t-test is equivalent to a linear regression with only the intercept. Thus, the following functions/methods in Python and R will return the same results."
     )
 
-    st.markdown("Python: `pingouin.ttest(y, 0)`  # t-test against 0")
-    st.markdown("Python: `scipy.stats.ttest_1samp(y, 0)`  # t-test against 0")
+    st.markdown(
+        "Python: `pingouin.ttest(y, 0)`  # t-test against 0 (can be any other value)"
+    )
+    st.markdown(
+        "Python: `scipy.stats.ttest_1samp(y, 0)`  # t-test against 0 (can be any other value)"
+    )
     st.markdown(
         'Python: `statsmodels.formula.api.ols(formula="y ~ 1", data=dataframe).fit()`  # linear model with only intercept term'
     )
