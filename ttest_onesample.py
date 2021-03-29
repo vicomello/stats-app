@@ -38,14 +38,14 @@ st.markdown(
 )
 st.markdown("## Interactive app")
 st.markdown(
-    "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/Generalized_linear_model) for the one-sample t-test (more explanation provided below). For now, change the values in the sliders below, examine the (simulated) dataframe, and hover over the data points on the interactive figure to understand this statistical test. To reset to the default values, refresh the page."
+    "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/Generalized_linear_model) for the one-sample t-test (more explanation provided below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
 )
 st.markdown("####")
 
 #%% make columns/containers
 
 col1, _, col2, _, col3 = st.beta_columns(
-    [0.8, 0.05, 0.8, 0.05, 1.3]  # ratios of widths
+    [0.4, 0.025, 0.4, 0.025, 0.8]  # ratios of widths
 )
 
 #%% create sliders
@@ -59,8 +59,8 @@ slider_n_params = [
 ]
 slider_mean_params = [
     "Sample mean (average)",
-    -5.0,
-    5.0,
+    -4.0,
+    4.0,
     2.0,
     0.1,
 ]
@@ -68,7 +68,7 @@ slider_sd_params = [
     'Standard deviation (SD) or "spread"',
     0.1,
     10.0,
-    8.0,
+    6.0,
     0.1,
 ]
 
@@ -76,10 +76,12 @@ with col1:
     # st.markdown("Change the values to simulate new data")
     n = st.slider(*slider_n_params)
     slider_n_params[3] = n
-    st.write("Degrees of freedom ($N - 1$): ", n - 1)
+    st.markdown("#####")
+    # st.write("Degrees of freedom ($N - 1$): ", n - 1)
     mean = st.slider(*slider_mean_params)
     slider_mean_params[3] = mean
     st.write("Mean = $b_0$ = intercept = ", mean)
+    st.markdown("#####")
     sd = st.slider(*slider_sd_params)
     slider_sd_params[3] = sd
     # st.write("N, mean, SD: ", n, ",", mean, ",", sd)
@@ -102,7 +104,9 @@ df1["d"] = res["cohen-d"][0]
 with col3:
     # st.markdown("Simulated sample data (each row is one simulated data point $y_i$)")
     st.dataframe(
-        df1[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"), height=360
+        df1[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
+        height=360,
+        # width=377,
     )
 
 
@@ -112,7 +116,7 @@ x_domain = [-0.1, 0.1]
 # y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
 # y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
 # y_domain = [y_min, y_max]
-y_domain = [-40, 40]
+y_domain = [-30, 30]
 
 fig1 = (
     alt.Chart(df1)
@@ -167,13 +171,15 @@ finalfig = fig3 + fig2 + fig1
 finalfig.configure_axis(grid=False)
 finalfig.title = hline_b0["Model"][0]
 with col2:
-    # st.markdown("General linear model (interactive figure)")
     st.altair_chart(finalfig, use_container_width=True)
 
 #%% show t test results (optional)
 
-my_expander = st.beta_expander("Click to see detailed results")
+my_expander = st.beta_expander("Click here to see detailed one-sample t-test results")
 with my_expander:
+    st.markdown(
+        "The values in green will update as you change the slider values above."
+    )
     res_list = []
     res_list.append(res["dof"].round(0)[0])  # df
     res_list.append(res["T"].round(2)[0])
