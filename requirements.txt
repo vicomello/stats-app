@@ -1,5 +1,6 @@
 altair
 numpy
 pandas
+pingouin
 scipy
 streamlit
