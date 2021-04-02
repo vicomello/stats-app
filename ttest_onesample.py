@@ -291,11 +291,11 @@ with my_expander:
 
 # %% container prompts
 
-my_expander = st.beta_expander("Test your intuition")
-with my_expander:
-    st.markdown("How does changing the sample size ($N$) change the results?")
-    st.markdown("answer")
-    st.markdown("######")
-    st.markdown("Question2 ")
-    st.markdown("answer")
-    st.markdown("######")
+# my_expander = st.beta_expander("Test your intuition")
+# with my_expander:
+#     st.markdown("How does changing the sample size ($N$) change the results?")
+#     st.markdown("answer")
+#     st.markdown("######")
+#     st.markdown("Question2 ")
+#     st.markdown("answer")
+#     st.markdown("######")
