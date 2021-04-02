@@ -31,7 +31,7 @@ st.markdown(
 )
 st.markdown("## Interactive app")
 st.markdown(
-    "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/Generalized_linear_model) for the one-sample t-test (more explanation provided below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
+    "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the one-sample t-test (more explanation provided below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
 )
 st.markdown("####")
 
@@ -259,7 +259,7 @@ with my_expander:
 
 st.markdown("## General linear model")
 st.markdown(
-    "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/Generalized_linear_model) is following linear equation:"
+    "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/General_linear_model) is following linear equation:"
 )
 eq1 = "y_i = b_0 + \epsilon_i"
 st.latex(eq1)
