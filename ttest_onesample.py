@@ -109,6 +109,7 @@ x_domain = [-0.1, 0.1]
 # y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
 # y_domain = [y_min, y_max]
 y_domain = [-30, 30]
+fig_height = 377
 
 fig1 = (
     alt.Chart(df1)
@@ -139,7 +140,7 @@ hline_b0 = pd.DataFrame(
 
 fig2 = (
     alt.Chart(hline_b0)
-    .mark_rule(size=3, color="#f98e09")
+    .mark_rule(size=3.4, color="#bc3754")
     .encode(
         y=alt.Y("b0 (mean):Q", axis=alt.Axis(title="")),
         tooltip=["Model", "b0 (mean)", "SD", "N"],
@@ -152,14 +153,36 @@ fig2 = (
 
 fig3 = (
     alt.Chart(pd.DataFrame({"y": [0]}))
-    .mark_rule(size=1, color="#000004", opacity=0.8, strokeDash=[3, 3])
+    .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
     .encode(y=alt.Y("y:Q", axis=alt.Axis(title="")))
-    .properties(height=377)
+    .properties(height=fig_height)
 )
+
+# %% violin
+
+fig5 = (
+    alt.Chart(df1)
+    .transform_density(density="Happiness", as_=["Happiness", "density"], bandwidth=2.0)
+    .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
+    .encode(
+        alt.X(
+            "density:Q",
+            title="",
+            stack="zero",
+            impute=None,
+            axis=alt.Axis(labels=False, values=[0], grid=False, ticks=True),
+        ),
+        alt.Y(
+            "Happiness:Q",
+        ),
+    )
+    .properties(height=fig_height)
+)
+
 
 #%% combine figures
 
-finalfig = fig3 + fig2 + fig1
+finalfig = fig3 + fig2 + fig5 + fig1
 finalfig.configure_axis(grid=False)
 finalfig.title = hline_b0["Model"][0]
 with col2:
@@ -194,9 +217,6 @@ with my_expander:
     res_list.append(res["power"].round(2)[0])
 
     st.write(
-        # "$b_0$ = ",
-        # np.round(mean, 2),
-        # ", t(",
         "t(",
         res_list[0],
         ") = ",
