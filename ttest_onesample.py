@@ -7,20 +7,12 @@ import altair as alt
 import utils
 import pingouin as pg
 
-# %matplotlib inline
-# plt.style.use(['fast'])
-# plt.ion()
-
 #%% config
 
 st.set_page_config(
     page_title="One-sample t-test",
     layout="wide",
     initial_sidebar_state="collapsed",
-)
-
-add_selectbox = st.sidebar.selectbox(
-    "Learn more about...", ("Independent-samples t-test", "b", "c")
 )
 
 #%% title and description
