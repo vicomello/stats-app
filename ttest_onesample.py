@@ -95,13 +95,16 @@ res = pg.ttest(df1["Happiness"], 0)
 df1["d"] = res["cohen-d"][0]
 
 with col3:
-    # st.markdown("Simulated sample data (each row is one simulated data point $y_i$)")
+    fmt = {
+        "i": "{:.0f}",
+        "Happiness": "{:.1f}",
+        "Mean": "{:.1f}",
+        "Residual": "{:.1f}",
+    }
     st.dataframe(
-        df1[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
+        df1[["i", "Happiness", "Mean", "Residual"]].style.format(fmt),
         height=360,
-        # width=377,
     )
-
 
 #%% generate and draw data points
 
