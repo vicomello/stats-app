@@ -119,8 +119,8 @@ def main():
 
     #%% create dataframe
     
-    df1 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n, mean, sd), "Rating": 1, "Race": 'human'})
-    df2 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n2, mean2, sd2), "Rating": 2, "Race": 'martian'})
+    df1 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n, mean, sd), "Rating": 1, "Race": 'human', 'Coding':0})
+    df2 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n2, mean2, sd2), "Rating": 2, "Race": 'martian', 'Coding':1})
     df_all = pd.concat([df1,df2], axis=0)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
@@ -221,7 +221,7 @@ def main():
 
     fig2 = (
         alt.Chart(means)
-        .mark_line(point=True, color='black')
+        .mark_point(color='black', filled=True)
         .encode(
             x=alt.X(
                 'X',
@@ -231,15 +231,33 @@ def main():
             y=alt.Y(
                 'Mean',
                 scale=alt.Scale(domain=y_domain),
-                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
+                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13)
             ),
         )
         .interactive()
     )
+    fig3 = (
+        alt.Chart(means)
+        .mark_line(color='black')
+        .encode(
+            x=alt.X(
+                'X',
+                scale=alt.Scale(domain=x_domain),
+                axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+            ),
+            y=alt.Y(
+                'Mean',
+                scale=alt.Scale(domain=y_domain),
+                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13)
+            ),
+        )
+        .interactive()
+    )
+    #TODO - change the color of the dots
 
     #%% combine figures
 
-    finalfig = fig1 + fig2
+    finalfig = fig1 + fig2 + fig3
     finalfig.configure_axis(grid=False)
     #finalfig.title = hline_b0["Model"][0]
     with col3:
