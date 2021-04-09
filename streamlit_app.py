@@ -1,17 +1,15 @@
 #%%
-import streamlit as st
 import numpy as np
 import pandas as pd
+import streamlit as st
 
-#%%
-# Importing pages
-import ttest_onesample
-import ttest_independent
-import regression
 import home
+import regression
+import ttest_independent
+import ttest_onesample
 
 #%% Page
-#TODO
+
 st.set_page_config(
     page_title="",
     layout="wide",
@@ -22,17 +20,16 @@ st.set_page_config(
 
 # The page names and the page files
 PAGES = {
-    "home": home,
-    "One sampled t-test": ttest_onesample,
-    "Independent samples t-test": ttest_independent,
+    "Goals of this app": home,
+    "One-sample t-test": ttest_onesample,
+    "Independent-samples t-test": ttest_independent,
     "regression": regression,
 }
 
-# Displaying the selection box 
-st.sidebar.title('See other tests:')
+# Displaying the selection box
+st.sidebar.title("See other tests:")
 selection = st.sidebar.selectbox("Go to", list(PAGES.keys()))
 page = PAGES[selection]
 page.main()
 
 # %%
-

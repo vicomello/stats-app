@@ -31,15 +31,13 @@ def main():
     )
     st.markdown("## Interactive app")
     st.markdown(
-        "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the one-sample t-test (more explanation provided below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
+        "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the one-sample t-test (more explanation below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
     )
     st.markdown("####")
 
     #%% make columns/containers
 
-    col1, _, col2, _, col3 = st.beta_columns(
-        [0.4, 0.025, 0.4, 0.025, 0.8]  # ratios of widths
-    )
+    col1, col2, col3 = st.beta_columns([0.3, 0.3, 0.3])  # ratios of widths
 
     #%% create sliders
 
@@ -88,7 +86,9 @@ def main():
     df1["Residual"] = df1["Happiness"] - df1["Mean"]
     df1["Residual"] = df1["Residual"].round(2)
     for i in df1.itertuples():
-        df1.loc[i.Index, "Model"] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
+        df1.loc[
+            i.Index, "Model"
+        ] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
     # t-test
     res = pg.ttest(df1["Happiness"], 0)
@@ -166,7 +166,9 @@ def main():
 
     fig5 = (
         alt.Chart(df1)
-        .transform_density(density="Happiness", as_=["Happiness", "density"], bandwidth=2.0)
+        .transform_density(
+            density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
+        )
         .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
         .encode(
             alt.X(
@@ -183,7 +185,6 @@ def main():
         .properties(height=fig_height)
     )
 
-
     #%% combine figures
 
     finalfig = fig3 + fig2 + fig5 + fig1
@@ -194,7 +195,9 @@ def main():
 
     #%% show t test results (optional)
 
-    my_expander = st.beta_expander("Click here to see detailed one-sample t-test results")
+    my_expander = st.beta_expander(
+        "Click here to see detailed one-sample t-test results"
+    )
     with my_expander:
         st.markdown(
             "The values in green will update as you change the slider values above."
@@ -256,7 +259,6 @@ def main():
         )
 
     # %% container derivation
-
 
     # %% equations
 
