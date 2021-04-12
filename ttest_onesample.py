@@ -8,13 +8,9 @@ import utils
 import pingouin as pg
 
 #%% config
+
+
 def main():
-    # st.set_page_config(
-    #    page_title="One-sample t-test",
-    #    layout="wide",
-    #    initial_sidebar_state="collapsed",
-    #    page_icon="random",
-    # )
 
     #%% title and description
 

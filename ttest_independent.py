@@ -1,27 +1,23 @@
 #%%
 
-import streamlit as st
+import altair as alt
 import numpy as np
 import pandas as pd
-import altair as alt
-import utils
 import pingouin as pg
+import streamlit as st
+
+import utils
+
 
 #%% config
 def main():
-    #st.set_page_config(
-    #    page_title="Independent-samples t-test",
-    #    layout="wide",
-    #    initial_sidebar_state="collapsed",
-    #    page_icon="random",
-    #)
 
     #%% title and description
-
     st.title("Independent-samples t-test")
     st.markdown(
-        "We use the **one-sample t-test** when we have a **sample** (i.e., a set of $N$ data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value** (it can be any value, but let's assume it's 0 here)."
+        "We use the **independent-samples t-test** when we have **two unrelated (independent) samples** (i.e., two distinct sets of $N$ data points each) and we want to know whether the mean of the two samples are different from each other."
     )
+
     st.markdown("## Who's happier—humans or Martians?")
     st.markdown(
         "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
@@ -35,30 +31,24 @@ def main():
     )
     st.markdown("####")
 
-    #%% make columns/containers
-
-    col1, _, col2, _, col3 = st.beta_columns(
-        [0.4, 0.025, 0.4, 0.025, 0.8]  # ratios of widths
-    )
-
     #%% create sliders for humans
 
     slider_n_params = [
-        "Sample size (N, or no. of data points)",  # label
+        "",  # label
         2,  # min
         50,  # max
         25,  # start value
         1,  # step
     ]
     slider_mean_params = [
-        "Sample mean (average)",
+        "",
         -4.0,
         4.0,
         2.0,
         0.1,
     ]
     slider_sd_params = [
-        'Standard deviation (SD) or "spread"',
+        "",
         0.1,
         10.0,
         6.0,
@@ -68,76 +58,111 @@ def main():
     #%% create sliders for martians
 
     slider_n2_params = [
-        "Sample size (N, or no. of data points)",  # label
+        "",  # label
         2,  # min
         50,  # max
         30,  # start value
         1,  # step
     ]
     slider_mean2_params = [
-        "Sample mean (average)",
+        "",
         -4.0,
         4.0,
         6.0,
         0.1,
     ]
     slider_sd2_params = [
-        'Standard deviation (SD) or "spread"',
+        "",
         0.1,
         10.0,
         4.0,
         0.1,
     ]
 
-    with col1:
-        st.markdown("Human data:")
+    # sidebar headers
+    col01, col02 = st.sidebar.beta_columns(2)  # ratios of widths
+    with col01:
+        st.markdown("### Humans")
+    with col02:
+        st.markdown("### Martians")
+
+    # sidebar columns - sample size
+    st.sidebar.markdown("#### ")
+    st.sidebar.markdown("##### Sample size (N)")
+    col11, col12 = st.sidebar.beta_columns(2)  # ratios of widths
+    with col11:
+        # st.markdown("Humans")
         n = st.slider(*slider_n_params)
         slider_n_params[3] = n
-        st.markdown("#####")
-        # st.write("Degrees of freedom ($N - 1$): ", n - 1)
+    with col12:
+        # st.markdown("Martians")
+        n2 = st.slider(*slider_n2_params)
+
+    # sidebar columns - mean
+    st.sidebar.markdown("##### Mean (average)")
+    col21, col22 = st.sidebar.beta_columns(2)  # ratios of widths
+    with col21:
         mean = st.slider(*slider_mean_params)
         slider_mean_params[3] = mean
-        #st.write("Mean = $b_0$ = intercept = ", mean)
-        st.markdown("#####")
+    with col22:
+        mean2 = st.slider(*slider_mean2_params)
+        slider_mean2_params[3] = mean2
+
+    # sidebar columns - sd
+    st.sidebar.markdown("##### Standard deviation (SD)")
+    col31, col32 = st.sidebar.beta_columns(2)  # ratios of widths
+    with col31:
         sd = st.slider(*slider_sd_params)
         slider_sd_params[3] = sd
-        # st.write("N, mean, SD: ", n, ",", mean, ",", sd)
-    
-    with col2:
-        st.markdown("Martian data:")
-        n2 = st.slider(*slider_n2_params)
-        slider_n_params[3] = n2
-        st.markdown("#####")
-        # st.write("Degrees of freedom ($N - 1$): ", n - 1)
-        mean2 = st.slider(*slider_mean2_params)
-        slider_mean_params[3] = mean2
-        #st.write("Mean = $b_0$ = intercept = ", mean2)
-        st.markdown("#####")
+    with col32:
         sd2 = st.slider(*slider_sd2_params)
-        slider_sd_params[3] = sd2
+        slider_sd2_params[3] = sd2
 
+    # sidebar container - advanced settings
+    sidebar_expander = st.sidebar.beta_expander("Click for more sliders")
+    with sidebar_expander:
+        st.text("change coding for each group")
+
+    #%% make columns/containers
+
+    col2, col3 = st.beta_columns([0.5, 0.5])  # ratios of widths
 
     #%% create dataframe
-    
-    df1 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n, mean, sd), "Rating": 1, "Race": 'human', 'Coding':0})
-    df2 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n2, mean2, sd2), "Rating": 2, "Race": 'martian', 'Coding':1})
-    df_all = pd.concat([df1,df2], axis=0)
+
+    df1 = pd.DataFrame(
+        {
+            "Happiness": utils.rand_norm_fixed(n, mean, sd),
+            "Rating": 1,
+            "Race": "human",
+            "Coding": 0,
+        }
+    )
+    df2 = pd.DataFrame(
+        {
+            "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
+            "Rating": 2,
+            "Race": "martian",
+            "Coding": 1,
+        }
+    )
+    df_all = pd.concat([df1, df2], axis=0)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
     for i in df_all.itertuples():
-        df_all.loc[i.Index, "Model"] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
+        df_all.loc[
+            i.Index, "Model"
+        ] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
     # t-test
     res = pg.ttest(df1["Happiness"], df2["Happiness"])
     df_all["d"] = res["cohen-d"][0]
 
-
     #%% generate and draw data points for humans
 
-    x_domain = [0.5,2.5]
+    x_domain = [0.5, 2.5]
     # y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
     # y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
     # y_domain = [y_min, y_max]
@@ -214,71 +239,88 @@ def main():
     # )
 
     #%% fig 2: the means for each sample and a line connecting them
-    
-    mean_human = pd.DataFrame({'Race': ['human'], 'Mean': [round(np.mean(df1['Happiness'],),3)],'X':1})
-    mean_martian = pd.DataFrame({'Race': ['martian'], 'Mean': [round(np.mean(df2['Happiness']),3)],'X':2})
+
+    mean_human = pd.DataFrame(
+        {
+            "Race": ["human"],
+            "Mean": [
+                round(
+                    np.mean(
+                        df1["Happiness"],
+                    ),
+                    3,
+                )
+            ],
+            "X": 1,
+        }
+    )
+    mean_martian = pd.DataFrame(
+        {"Race": ["martian"], "Mean": [round(np.mean(df2["Happiness"]), 3)], "X": 2}
+    )
     means = pd.concat([mean_human, mean_martian], axis=0)
 
     fig2 = (
         alt.Chart(means)
-        .mark_point(color='black', filled=True)
+        .mark_point(color="black", filled=True)
         .encode(
             x=alt.X(
-                'X',
+                "X",
                 scale=alt.Scale(domain=x_domain),
                 axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
             ),
             y=alt.Y(
-                'Mean',
+                "Mean",
                 scale=alt.Scale(domain=y_domain),
-                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13)
+                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
         )
         .interactive()
     )
     fig3 = (
         alt.Chart(means)
-        .mark_line(color='black')
+        .mark_line(color="black")
         .encode(
             x=alt.X(
-                'X',
+                "X",
                 scale=alt.Scale(domain=x_domain),
                 axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
             ),
             y=alt.Y(
-                'Mean',
+                "Mean",
                 scale=alt.Scale(domain=y_domain),
-                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13)
+                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
         )
         .interactive()
     )
-    #TODO - change the color of the dots
+    # TODO - change the color of the dots
 
     #%% combine figures
 
     finalfig = fig1 + fig2 + fig3
     finalfig.configure_axis(grid=False)
-    #finalfig.title = hline_b0["Model"][0]
-    with col3:
+    # finalfig.title = hline_b0["Model"][0]
+    with col2:
         st.altair_chart(finalfig, use_container_width=True)
 
-    
     #%% show dataframe
 
-    st.markdown("Simulated sample data (each row is one simulated data point $y_i$)")
-    st.dataframe(
-        #df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
-        df_all[["i", "Happiness", "Mean", "Residual"]],
-        height=360,
-        # width=377,
-    )
-    
-    
-    
+    with col3:
+        st.markdown(
+            "Simulated sample data (each row is one simulated data point $y_i$)"
+        )
+        st.dataframe(
+            # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
+            df_all[["i", "Happiness", "Mean", "Residual"]],
+            height=360,
+            # width=377,
+        )
+
     #%% show t test results (optional)
 
-    my_expander = st.beta_expander("Click here to see detailed one-sample t-test results")
+    my_expander = st.beta_expander(
+        "Click here to see detailed independent-samples t-test results"
+    )
     with my_expander:
         st.markdown(
             "The values in green will update as you change the slider values above."
@@ -341,7 +383,6 @@ def main():
 
     # %% container derivation
 
-
     # %% equations
 
     st.markdown("## General linear model")
@@ -399,5 +440,6 @@ def main():
     #     st.markdown("Question2 ")
     #     st.markdown("answer")
     #     st.markdown("######")
+
 
 # %%

@@ -13,7 +13,7 @@ import utils
 #%% Page
 
 st.set_page_config(
-    page_title="",
+    page_title="General linear model app",
     layout="wide",
     initial_sidebar_state="expanded",
     page_icon="random",
@@ -29,13 +29,15 @@ PAGES = {
 }
 
 # Displaying the selection box
-st.sidebar.title("Where to begin?")
+st.sidebar.markdown("## What's next?")
 selection = st.sidebar.selectbox("", list(PAGES.keys()))
 page = PAGES[selection]
 page.main()
 
 # %%
 
-st.sidebar.markdown("Some more text here.")
-
-st.sidebar.markdown(f"Made by {utils.authors()}.")
+st.sidebar.markdown("# ")  # just trying stuff out
+st.sidebar.markdown("# ")
+st.sidebar.markdown("# ")
+st.sidebar.markdown("# ")
+st.sidebar.markdown(f"Made by {utils.authors()}")
