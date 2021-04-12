@@ -121,59 +121,67 @@ def main():
     sidebar_expander = st.sidebar.beta_expander("Click for more sliders")
     with sidebar_expander:
         st.text("change code for each group")
+        # TODO add slider for coding (range -1 to 1)
 
     #%% make columns/containers
 
     col2, col3 = st.beta_columns(2)  # ratios of widths
 
-    #%% create dataframe
+    #%% simulate data
 
     df1 = pd.DataFrame(
         {
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
-            "Rating": 1,
             "Species": "Human",
-            "Code": 0,
+            "Code": 0.0,
         }
     )
     df2 = pd.DataFrame(
         {
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
-            "Rating": 2,
             "Species": "Martian",
-            "Code": 1,
+            "Code": 1.0,
         }
     )
     df_all = pd.concat([df1, df2], axis=0)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
+    # TODO grand vs group mean  (transform method)
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
+    # TODO grand vs group mean residual
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
+
+    # create tooltip for plot (Model: ...)
     for i in df_all.itertuples():
         df_all.loc[
             i.Index, "Model"
         ] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
+    # group mean
+    df_mean = (
+        df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code"]]
+    )
+
     # t-test
     res = pg.ttest(df1["Happiness"], df2["Happiness"])
-    df_all["d"] = res["cohen-d"][0]
 
-    #%% generate and draw data points for humans
+    # TODO linear regression with pingouin
 
-    x_domain = [0.5, 2.5]
-    # y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
-    # y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
-    # y_domain = [y_min, y_max]
+    #%% plot
+
+    x_domain = [-1.15, 1.15]
     y_domain = [-30, 30]
     fig_height = 377
 
+    # TODO change x tick locations?
+
     fig1 = (
         alt.Chart(df_all)
-        .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#57106e", opacity=0.6)
+        .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#57106e", opacity=0.5)
         .encode(
             x=alt.X(
-                "Rating:Q",
+                "Code:Q",
                 scale=alt.Scale(domain=x_domain),
                 axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
             ),
@@ -185,9 +193,8 @@ def main():
             color="Species",
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
-        # .properties(width=144, height=377)
-        # .properties(title="General linear model")
         .interactive()
+        .properties(height=377)
     )
 
     #%% horizontal line for b0 mean
@@ -239,53 +246,41 @@ def main():
 
     #%% fig 2: the means for each sample and a line connecting them
 
-    mean_human = pd.DataFrame(
-        {
-            "Race": ["human"],
-            "Mean": [
-                round(
-                    np.mean(
-                        df1["Happiness"],
-                    ),
-                    3,
-                )
-            ],
-            "X": 1,
-        }
-    )
-    mean_martian = pd.DataFrame(
-        {"Race": ["martian"], "Mean": [round(np.mean(df2["Happiness"]), 3)], "X": 2}
-    )
-    means = pd.concat([mean_human, mean_martian], axis=0)
+    # df_means = df_all.groupby("Species")
 
+    # plot means
     fig2 = (
-        alt.Chart(means)
-        .mark_point(color="black", filled=True)
+        alt.Chart(df_mean)
+        .mark_point(filled=True, size=144)
         .encode(
             x=alt.X(
-                "X",
+                "Code:Q",
                 scale=alt.Scale(domain=x_domain),
-                axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+                axis=alt.Axis(grid=False, title="", tickCount=2),
             ),
             y=alt.Y(
-                "Mean",
+                "Happiness:Q",
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
+            color="Species",
+            tooltip=["Happiness", "Code"],
         )
         .interactive()
     )
+
+    # connect means with line
     fig3 = (
-        alt.Chart(means)
+        alt.Chart(df_mean)
         .mark_line(color="black")
         .encode(
             x=alt.X(
-                "X",
+                "Code:Q",
                 scale=alt.Scale(domain=x_domain),
                 axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
             ),
             y=alt.Y(
-                "Mean",
+                "Happiness:Q",
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
@@ -305,14 +300,13 @@ def main():
     #%% show dataframe
 
     with col3:
-        st.markdown(
-            "Simulated sample data (each row is one simulated data point $y_i$)"
-        )
+        # st.markdown(
+        #     "Simulated sample data (each row is one simulated data point $y_i$)"
+        # )
         st.dataframe(
             # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
             df_all[["i", "Species", "Code", "Happiness", "Mean", "Residual"]],
             height=360,
-            # width=377,
         )
 
     #%% show t test results (optional)
