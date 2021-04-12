@@ -18,18 +18,17 @@ def main():
         "We use the **independent-samples t-test** when we have **two unrelated (independent) samples** (i.e., two distinct sets of $N$ data points each) and we want to know whether the mean of the two samples are different from each other."
     )
 
-    st.markdown("## Who's happier—humans or Martians?")
+    st.markdown("### Who's happier—humans or Martians?")
     st.markdown(
         "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
     )
     st.markdown(
         "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
     )
-    st.markdown("## Interactive app")
+    st.markdown("### Interactive app")
     st.markdown(
         "$y_i = b_0 + b_1 x_1 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the independent-samples t-test (more explanation provided below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
     )
-    st.markdown("####")
 
     #%% create sliders for humans
 
@@ -121,11 +120,11 @@ def main():
     # sidebar container - advanced settings
     sidebar_expander = st.sidebar.beta_expander("Click for more sliders")
     with sidebar_expander:
-        st.text("change coding for each group")
+        st.text("change code for each group")
 
     #%% make columns/containers
 
-    col2, col3 = st.beta_columns([0.5, 0.5])  # ratios of widths
+    col2, col3 = st.beta_columns(2)  # ratios of widths
 
     #%% create dataframe
 
@@ -133,16 +132,16 @@ def main():
         {
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
             "Rating": 1,
-            "Race": "human",
-            "Coding": 0,
+            "Species": "Human",
+            "Code": 0,
         }
     )
     df2 = pd.DataFrame(
         {
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
             "Rating": 2,
-            "Race": "martian",
-            "Coding": 1,
+            "Species": "Martian",
+            "Code": 1,
         }
     )
     df_all = pd.concat([df1, df2], axis=0)
@@ -183,7 +182,7 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color="Race",
+            color="Species",
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
         # .properties(width=144, height=377)
@@ -311,7 +310,7 @@ def main():
         )
         st.dataframe(
             # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
-            df_all[["i", "Happiness", "Mean", "Residual"]],
+            df_all[["i", "Species", "Code", "Happiness", "Mean", "Residual"]],
             height=360,
             # width=377,
         )
