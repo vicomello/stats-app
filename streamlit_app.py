@@ -22,8 +22,8 @@ st.set_page_config(
 
 # The page names and the page files
 PAGES = {
-    # "Start here": home,
-    # "One-sample t-test": ttest_onesample,
+    "Start here": home,
+    "One-sample t-test": ttest_onesample,
     "Independent-samples t-test": ttest_independent,
     "Regression": regression,
 }

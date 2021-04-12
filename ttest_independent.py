@@ -15,7 +15,7 @@ def main():
     #%% title and description
     st.title("Independent-samples t-test")
     st.markdown(
-        "We use the **independent-samples t-test** when we have **two unrelated (independent) samples** (i.e., two distinct sets of $N$ data points each) and we want to know whether the mean of the two samples are different from each other."
+        "We use the **independent-samples t-test** when we have **two unrelated (independent) samples** (i.e., two distinct datasets with $N$ data points each) and we want to know whether the mean of the two samples are different from each other."
     )
 
     st.markdown("### Who's happier—humans or Martians?")
@@ -27,7 +27,7 @@ def main():
     )
     st.markdown("### Interactive app")
     st.markdown(
-        "$y_i = b_0 + b_1 x_1 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the independent-samples t-test (more explanation provided below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
+        "$y_i = b_0 + b_1 x_1 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the independent-samples t-test (more explanation below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
     )
 
     #%% create sliders for humans
