@@ -31,4 +31,4 @@ def authors():
         "[@vicoldemburgo](https://twitter.com/vicoldemburgo)",
     ]
     np.random.shuffle(us)
-    return us
+    return f"{us[0]} & {us[1]}"
