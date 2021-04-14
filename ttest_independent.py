@@ -183,14 +183,17 @@ def main():
             x=alt.X(
                 "Code:Q",
                 scale=alt.Scale(domain=x_domain),
-                axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+                #axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+                axis=alt.Axis(grid=False, title="", tickCount=2),
+                #labelExpr:string
+                #labelAlign:anyOf
             ),
             y=alt.Y(
                 "Happiness:Q",
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color="Species",
+            color=alt.Color('Species', legend=None),
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
         .interactive()
@@ -199,29 +202,36 @@ def main():
 
     #%% horizontal line for b0 mean
 
-    # hline_b0 = pd.DataFrame(
-    #     {"b0 (mean)": [mean], "N": [n], "SD": [sd], "Model": f"y = {mean} + e"},
-    # )
+    #  hline_b0 = pd.DataFrame(
+    #      {"b0 (mean)": [mean], "N": [n], "SD": [sd], "Model": f"y = {mean} + e"},
+    #  )
 
-    # fig2 = (
-    #     alt.Chart(hline_b0)
-    #     .mark_rule(size=3.4, color="#bc3754")
-    #     .encode(
-    #         y=alt.Y("b0 (mean):Q", axis=alt.Axis(title="")),
-    #         tooltip=["Model", "b0 (mean)", "SD", "N"],
-    #     )
-    #     .interactive()
-    #     # .properties(width=233, height=377)
-    # )
+    #  fig4 = (
+    #      alt.Chart(hline_b0)
+    #      .mark_rule(size=3.4, color="#bc3754")
+    #      .encode(
+    #          y=alt.Y("b0 (mean):Q", axis=alt.Axis(title="")),
+    #          tooltip=["Model", "b0 (mean)", "SD", "N"],
+    #      )
+    #      .interactive()
+    #      .properties(width=233, height=377)
+    #  )
 
     #%% intercepts
 
-    # fig3 = (
-    #     alt.Chart(pd.DataFrame({"y": [0]}))
-    #     .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
-    #     .encode(y=alt.Y("y:Q", axis=alt.Axis(title="")))
-    #     .properties(height=fig_height)
-    # )
+    fig4 = (
+        alt.Chart(pd.DataFrame({"y": [0]}))
+        .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
+        .encode(y=alt.Y("y:Q", axis=alt.Axis(title="")))
+        .properties(height=fig_height)
+    )
+    
+    fig5 = (
+        alt.Chart(pd.DataFrame({"x": [0]}))
+        .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
+        .encode(x=alt.X("x:Q", axis=alt.Axis(title="")))
+        .properties(height=fig_height)
+    )
 
     # %% violin
 
@@ -263,7 +273,7 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color="Species",
+            color=alt.Color('Species', legend=None),
             tooltip=["Happiness", "Code"],
         )
         .interactive()
@@ -277,7 +287,8 @@ def main():
             x=alt.X(
                 "Code:Q",
                 scale=alt.Scale(domain=x_domain),
-                axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+                #axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+                axis=alt.Axis(grid=False, title="", tickCount=2),
             ),
             y=alt.Y(
                 "Happiness:Q",
@@ -291,7 +302,7 @@ def main():
 
     #%% combine figures
 
-    finalfig = fig1 + fig2 + fig3
+    finalfig = fig1 + fig2 + fig3 + fig4 + fig5
     finalfig.configure_axis(grid=False)
     # finalfig.title = hline_b0["Model"][0]
     with col2:
