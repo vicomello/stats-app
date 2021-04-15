@@ -117,10 +117,19 @@ def main():
         sd2 = st.slider(*slider_sd2_params)
         slider_sd2_params[3] = sd2
 
+    code1_params = ["Humans", -1.0, 1.0, 0.0, 0.1]
+    code2_params = ["Martians", -1.0, 1.0, 1.0, 0.1]
+    
     # sidebar container - advanced settings
     sidebar_expander = st.sidebar.beta_expander("Click for more sliders")
+    col41, col42 = st.sidebar.beta_columns(2)
     with sidebar_expander:
-        st.text("change code for each group")
+        st.text("Change the code for each group.")
+        #with col41: 
+        code1 = st.slider(*code1_params)
+        #with col42:
+        code2 = st.slider(*code2_params)
+        
         # TODO add slider for coding (range -1 to 1)
 
     #%% make columns/containers
@@ -133,14 +142,14 @@ def main():
         {
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
             "Species": "Human",
-            "Code": 0.0,
+            "Code": code1,
         }
     )
     df2 = pd.DataFrame(
         {
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
             "Species": "Martian",
-            "Code": 1.0,
+            "Code": code2,
         }
     )
     df_all = pd.concat([df1, df2], axis=0)
@@ -193,7 +202,7 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color=alt.Color('Species', legend=None),
+            color=alt.Color('Species'),
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
         .interactive()
@@ -273,7 +282,7 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color=alt.Color('Species', legend=None),
+            color=alt.Color('Species'),
             tooltip=["Happiness", "Code"],
         )
         .interactive()
