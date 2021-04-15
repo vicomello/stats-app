@@ -33,7 +33,7 @@ def main():
 
     #%% make columns/containers
 
-    col1, col2, col3 = st.beta_columns([0.3, 0.3, 0.3])  # ratios of widths
+    col1, col2 = st.beta_columns(2)  # ratios of widths
 
     #%% create sliders
 
@@ -59,8 +59,10 @@ def main():
         0.1,
     ]
 
-    with col1:
-        # st.markdown("Change the values to simulate new data")
+    col11 = st.sidebar.beta_container()
+    
+    with col11:
+        st.sidebar.markdown("Change the values to simulate new data")
         n = st.slider(*slider_n_params)
         slider_n_params[3] = n
         st.markdown("#####")
@@ -90,7 +92,7 @@ def main():
     res = pg.ttest(df1["Happiness"], 0)
     df1["d"] = res["cohen-d"][0]
 
-    with col3:
+    with col2:
         fmt = {
             "i": "{:.0f}",
             "Happiness": "{:.1f}",
@@ -186,7 +188,7 @@ def main():
     finalfig = fig3 + fig2 + fig5 + fig1
     finalfig.configure_axis(grid=False)
     finalfig.title = hline_b0["Model"][0]
-    with col2:
+    with col1:
         st.altair_chart(finalfig, use_container_width=True)
 
     #%% show t test results (optional)
