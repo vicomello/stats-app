@@ -57,10 +57,10 @@ def main():
     #%% create sliders for martians
 
     slider_n2_params = [
-        "",  # label
+        " ",  # label
         2,  # min
         50,  # max
-        30,  # start value
+        25,  # start value
         1,  # step
     ]
     slider_mean2_params = [
@@ -134,7 +134,7 @@ def main():
 
     #%% make columns/containers
 
-    col2, col3 = st.beta_columns(2)  # ratios of widths
+    col2, _, col3 = st.beta_columns([0.3, 0.1, 0.5])  # ratios of widths
 
     #%% simulate data
 
@@ -160,7 +160,7 @@ def main():
     # TODO grand vs group mean residual
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
-
+    df_all['Code_centered'] = df_all["Code"]-df_all['Code'].mean() 
     # create tooltip for plot (Model: ...)
     for i in df_all.itertuples():
         df_all.loc[
@@ -174,6 +174,7 @@ def main():
 
     # t-test
     res = pg.ttest(df1["Happiness"], df2["Happiness"])
+    #TODO linear regression with pingouin
 
     # TODO linear regression with pingouin
 
@@ -206,7 +207,7 @@ def main():
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
         .interactive()
-        .properties(height=377)
+        .properties(height=377, width=89)
     )
 
     #%% horizontal line for b0 mean
@@ -315,7 +316,7 @@ def main():
     finalfig.configure_axis(grid=False)
     # finalfig.title = hline_b0["Model"][0]
     with col2:
-        st.altair_chart(finalfig, use_container_width=True)
+        st.altair_chart(finalfig, use_container_width=False)
 
     #%% show dataframe
 
@@ -325,7 +326,7 @@ def main():
         # )
         st.dataframe(
             # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
-            df_all[["i", "Species", "Code", "Happiness", "Mean", "Residual"]],
+            df_all[["i", "Species", "Code", "Code_centered", "Happiness", "Mean", "Residual"]],
             height=360,
         )
 
