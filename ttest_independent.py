@@ -322,6 +322,49 @@ def main():
         )
         .interactive()
     )
+
+    #%% violin plots
+    fig6 = (
+        alt.Chart(df1)
+        .transform_density(
+            density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
+        )
+        .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
+        .encode(
+            alt.X(
+                x_coding,
+                title="",
+                stack="zero",
+                impute=None,
+                axis=alt.Axis(labels=False, values=[0], grid=False, ticks=True),
+            ),
+            alt.Y(
+                "Happiness:Q",
+            ),
+        )
+        .properties(height=fig_height)
+    )
+
+    fig7 = (
+        alt.Chart(df2)
+        .transform_density(
+            density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
+        )
+        .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
+        .encode(
+            alt.X(
+                x_coding,
+                title="",
+                stack="zero",
+                impute=None,
+                axis=alt.Axis(labels=False, values=[0], grid=False, ticks=True),
+            ),
+            alt.Y(
+                "Happiness:Q",
+            ),
+        )
+        .properties(height=fig_height)
+    )
     # TODO - change the color of the dots
 
     #%% combine figures
@@ -333,7 +376,7 @@ def main():
     b1 = (((df1["Happiness"].mean().round(2))-(df2["Happiness"].mean().round(2)))/((df1["Code"].mean().round(1))-(df2["Code"].mean().round(1)))).round(1)
     model = f'y = {df1["Happiness"].mean().round(2)} + {b1}x1 + e'
 
-    finalfig = fig1 + fig2 + fig3 + fig4 + fig5
+    finalfig = fig1 + fig2 + fig3 + fig4 + fig5 + fig6 + fig7
     finalfig.configure_axis(grid=False)
     finalfig.title = model
     with col2:
