@@ -129,12 +129,14 @@ def main():
         code1 = st.slider(*code1_params)
         #with col42:
         code2 = st.slider(*code2_params)
+        center_code = st.checkbox("Center code")
         
         # TODO add slider for coding (range -1 to 1)
 
+
     #%% make columns/containers
 
-    col2, _, col3 = st.beta_columns([0.3, 0.1, 0.5])  # ratios of widths
+    col2, _, col3 = st.beta_columns([0.3, 0.2, 0.5])  # ratios of widths
 
     #%% simulate data
 
@@ -143,6 +145,7 @@ def main():
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
             "Species": "Human",
             "Code": code1,
+            "Group_Mean": mean
         }
     )
     df2 = pd.DataFrame(
@@ -150,8 +153,11 @@ def main():
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
             "Species": "Martian",
             "Code": code2,
+            "Group_Mean": mean2
         }
     )
+    #%% Creating dataframe
+
     df_all = pd.concat([df1, df2], axis=0)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
@@ -169,11 +175,12 @@ def main():
 
     # group mean
     df_mean = (
-        df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code"]]
+        df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code","Code_centered"]]
     )
 
     # t-test
-    res = pg.ttest(df1["Happiness"], df2["Happiness"])
+    #res = pg.ttest(df1["Happiness"], df2["Happiness"])
+    #df1["d"] = res["cohen-d"][0]
     #TODO linear regression with pingouin
 
     # TODO linear regression with pingouin
@@ -186,12 +193,18 @@ def main():
 
     # TODO change x tick locations?
 
+    #%% Centering the coding based on the checkbox
+    if center_code == True:
+        x_coding = "Code_centered:Q"
+    else:
+        x_coding = "Code:Q"
+
     fig1 = (
         alt.Chart(df_all)
         .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#57106e", opacity=0.5)
         .encode(
             x=alt.X(
-                "Code:Q",
+                x_coding,
                 scale=alt.Scale(domain=x_domain),
                 #axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
@@ -207,14 +220,15 @@ def main():
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
         .interactive()
-        .properties(height=377, width=89)
+        .properties(height=377, width=477)
     )
 
     #%% horizontal line for b0 mean
 
-    #  hline_b0 = pd.DataFrame(
-    #      {"b0 (mean)": [mean], "N": [n], "SD": [sd], "Model": f"y = {mean} + e"},
-    #  )
+    
+    hline_b0 = pd.DataFrame(
+        {"b0 (mean)": [df_all["Happiness"].mean().round(2)], "N": [n + n2], "SD": [sd], "Model": f"y = {mean} + e"},
+    )
 
     #  fig4 = (
     #      alt.Chart(hline_b0)
@@ -274,7 +288,7 @@ def main():
         .mark_point(filled=True, size=144)
         .encode(
             x=alt.X(
-                "Code:Q",
+                x_coding,
                 scale=alt.Scale(domain=x_domain),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
             ),
@@ -295,7 +309,7 @@ def main():
         .mark_line(color="black")
         .encode(
             x=alt.X(
-                "Code:Q",
+                x_coding,
                 scale=alt.Scale(domain=x_domain),
                 #axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
@@ -312,9 +326,16 @@ def main():
 
     #%% combine figures
 
+    #hline_b0 = pd.DataFrame(
+    #    {"b0 (mean)": [mean], "N": [n], "SD": [sd], "Model": f"y = {mean} + e"},
+    #)
+    # lm = pg.linear_regression(df1['Happiness'], df2['Happiness'])
+    b1 = (((df1["Happiness"].mean().round(2))-(df2["Happiness"].mean().round(2)))/((df1["Code"].mean().round(1))-(df2["Code"].mean().round(1)))).round(1)
+    model = f'y = {df1["Happiness"].mean().round(2)} + {b1}x1 + e'
+
     finalfig = fig1 + fig2 + fig3 + fig4 + fig5
     finalfig.configure_axis(grid=False)
-    # finalfig.title = hline_b0["Model"][0]
+    finalfig.title = model
     with col2:
         st.altair_chart(finalfig, use_container_width=False)
 
@@ -330,6 +351,11 @@ def main():
             height=360,
         )
 
+    #%% calculate t test to show to them
+    res = pg.ttest(df1["Happiness"], df2["Happiness"])
+    #df1["d"] = res["cohen-d"][0]    
+    
+    
     #%% show t test results (optional)
 
     my_expander = st.beta_expander(
@@ -444,16 +470,7 @@ def main():
         st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
         st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
 
-    # %% container prompts
 
-    # my_expander = st.beta_expander("Test your intuition")
-    # with my_expander:
-    #     st.markdown("How does changing the sample size ($N$) change the results?")
-    #     st.markdown("answer")
-    #     st.markdown("######")
-    #     st.markdown("Question2 ")
-    #     st.markdown("answer")
-    #     st.markdown("######")
 
 
 # %%
