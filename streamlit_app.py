@@ -14,7 +14,7 @@ import utils
 
 st.set_page_config(
     page_title="General linear model app",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="expanded",
     page_icon="random",
 )

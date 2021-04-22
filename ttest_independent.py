@@ -119,15 +119,15 @@ def main():
 
     code1_params = ["Humans", -1.0, 1.0, 0.0, 0.1]
     code2_params = ["Martians", -1.0, 1.0, 1.0, 0.1]
-    
+
     # sidebar container - advanced settings
     sidebar_expander = st.sidebar.beta_expander("Click for more sliders")
     col41, col42 = st.sidebar.beta_columns(2)
     with sidebar_expander:
         st.text("Change the code for each group.")
-        #with col41: 
+        # with col41:
         code1 = st.slider(*code1_params)
-        #with col42:
+        # with col42:
         code2 = st.slider(*code2_params)
         center_code = st.checkbox("Center code")
 
@@ -142,7 +142,7 @@ def main():
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
             "Species": "Human",
             "Code": code1,
-            "Group_Mean": mean
+            "Group_Mean": mean,
         }
     )
     df2 = pd.DataFrame(
@@ -150,7 +150,7 @@ def main():
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
             "Species": "Martian",
             "Code": code2,
-            "Group_Mean": mean2
+            "Group_Mean": mean2,
         }
     )
     #%% Creating dataframe
@@ -161,7 +161,7 @@ def main():
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
-    df_all['Code_centered'] = df_all["Code"]-df_all['Code'].mean() 
+    df_all["Code_centered"] = df_all["Code"] - df_all["Code"].mean()
     # create tooltip for plot (Model: ...)
     for i in df_all.itertuples():
         df_all.loc[
@@ -170,7 +170,9 @@ def main():
 
     # group mean
     df_mean = (
-        df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code","Code_centered"]]
+        df_all.groupby("Species")
+        .mean()
+        .reset_index()[["Species", "Happiness", "Code", "Code_centered"]]
     )
 
     #%% plot
@@ -194,17 +196,17 @@ def main():
             x=alt.X(
                 x_coding,
                 scale=alt.Scale(domain=x_domain),
-                #axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+                # axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
-                #labelExpr:string
-                #labelAlign:anyOf
+                # labelExpr:string
+                # labelAlign:anyOf
             ),
             y=alt.Y(
                 "Happiness:Q",
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color=alt.Color('Species'),
+            color=alt.Color("Species"),
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
         .interactive()
@@ -213,9 +215,13 @@ def main():
 
     #%% horizontal line for b0 mean
 
-    
     hline_b0 = pd.DataFrame(
-        {"b0 (mean)": [df_all["Happiness"].mean().round(2)], "N": [n + n2], "SD": [sd], "Model": f"y = {mean} + e"},
+        {
+            "b0 (mean)": [df_all["Happiness"].mean().round(2)],
+            "N": [n + n2],
+            "SD": [sd],
+            "Model": f"y = {mean} + e",
+        },
     )
 
     #  fig4 = (
@@ -237,7 +243,7 @@ def main():
         .encode(y=alt.Y("y:Q", axis=alt.Axis(title="")))
         .properties(height=fig_height)
     )
-    
+
     fig5 = (
         alt.Chart(pd.DataFrame({"x": [0]}))
         .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
@@ -246,14 +252,17 @@ def main():
     )
 
     # %% violin
+    # https://altair-viz.github.io/gallery/violin_plot.html
 
     # fig5 = (
-    #     alt.Chart(df1)
-    #     .transform_density(density="Happiness", as_=["Happiness", "density"], bandwidth=2.0)
+    #     alt.Chart(df_all)
+    #     .transform_density(
+    #         density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
+    #     )
     #     .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
     #     .encode(
     #         alt.X(
-    #             "density:Q",
+    #             "Species:N",
     #             title="",
     #             stack="zero",
     #             impute=None,
@@ -262,6 +271,7 @@ def main():
     #         alt.Y(
     #             "Happiness:Q",
     #         ),
+    #         color=alt.Color("Species"),
     #     )
     #     .properties(height=fig_height)
     # )
@@ -285,7 +295,7 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color=alt.Color('Species'),
+            color=alt.Color("Species"),
             tooltip=["Happiness", "Code"],
         )
         .interactive()
@@ -299,7 +309,7 @@ def main():
             x=alt.X(
                 x_coding,
                 scale=alt.Scale(domain=x_domain),
-                #axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
+                # axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
             ),
             y=alt.Y(
@@ -356,14 +366,26 @@ def main():
 
     #%% combine figures
 
-    #hline_b0 = pd.DataFrame(
+    # hline_b0 = pd.DataFrame(
     #    {"b0 (mean)": [mean], "N": [n], "SD": [sd], "Model": f"y = {mean} + e"},
-    #)
-    
-    #%% TODO: pingouin linear regression
-    # lm = pg.linear_regression(df1['Happiness'], df2['Happiness'])
-    b1 = (((df1["Happiness"].mean().round(2))-(df2["Happiness"].mean().round(2)))/((df1["Code"].mean().round(1))-(df2["Code"].mean().round(1)))).round(1)
-    model = f'y = {df1["Happiness"].mean().round(2)} + {b1}x1 + e'
+    # )
+
+    #%%
+
+    X = df_all[["Code"]]
+    if center_code:
+        X = df_all[["Code_centered"]]
+
+    y = df_all["Happiness"]
+    df_results = pg.linear_regression(X, y, add_intercept=True)
+    b0 = df_results.at[0, "coef"]
+    b1 = df_results.at[1, "coef"]
+
+    # b1 = (
+    #     ((df1["Happiness"].mean().round(2)) - (df2["Happiness"].mean().round(2)))
+    #     / ((df1["Code"].mean().round(1)) - (df2["Code"].mean().round(1)))
+    # ).round(1)
+    model = f"y = {np.round(b0, 2)} + {np.round(b1, 2)}x1 + e"
 
     finalfig = fig1 + fig2 + fig3 + fig4 + fig5 + fig6 + fig7
     finalfig.configure_axis(grid=False)
@@ -379,15 +401,24 @@ def main():
         # )
         st.dataframe(
             # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
-            df_all[["i", "Species", "Code", "Code_centered", "Happiness", "Mean", "Residual"]],
+            df_all[
+                [
+                    "i",
+                    "Species",
+                    "Code",
+                    "Code_centered",
+                    "Happiness",
+                    "Mean",
+                    "Residual",
+                ]
+            ],
             height=360,
         )
 
     #%% calculate t test to show to them
     res = pg.ttest(df1["Happiness"], df2["Happiness"])
-    #df1["d"] = res["cohen-d"][0]    
-    
-    
+    # df1["d"] = res["cohen-d"][0]
+
     #%% show t test results (optional)
 
     my_expander = st.beta_expander(
@@ -462,8 +493,9 @@ def main():
         "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/General_linear_model) is following linear equation:"
     )
     eq1 = "y_i = b_0 + b_1 x_1 + \epsilon_i"
+    eq1 = eq1.replace("b_0", str(np.round(b0, 2)))
+    eq1 = eq1.replace("b_1", str(np.round(b1, 2)))
     st.latex(eq1)
-    st.latex(eq1.replace("b_0", str(mean)))
 
     st.markdown(
         "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ (happiness scores for each day) and $\epsilon_i$ (residuals for each day) are shown in the dataframe above."
@@ -501,8 +533,6 @@ def main():
 
         st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
         st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
-
-
 
 
 # %%
