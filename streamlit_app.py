@@ -36,8 +36,5 @@ page.main()
 
 # %%
 
-st.sidebar.markdown("# ")  # just trying stuff out
-st.sidebar.markdown("# ")
-st.sidebar.markdown("# ")
 st.sidebar.markdown("# ")
 st.sidebar.markdown(f"Made by {utils.authors()}")

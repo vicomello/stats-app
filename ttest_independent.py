@@ -13,7 +13,7 @@ import utils
 def main():
 
     #%% title and description
-    st.title("Independent-samples t-test")
+    st.markdown("# Independent-samples t-test")
     st.markdown(
         "We use the **independent-samples t-test** when we have **two unrelated (independent) samples** (i.e., two distinct datasets with $N$ data points each) and we want to know whether the mean of the two samples are different from each other."
     )
@@ -421,9 +421,7 @@ def main():
 
     #%% show t test results (optional)
 
-    my_expander = st.beta_expander(
-        "Click here to see detailed independent-samples t-test results"
-    )
+    my_expander = st.beta_expander("Click here to see t-test results")
     with my_expander:
         st.markdown(
             "The values in green will update as you change the slider values above."

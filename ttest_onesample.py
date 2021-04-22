@@ -13,7 +13,7 @@ import utils
 
 def main():
 
-    #%% stuff for side bar
+    #%% create stuff for side bar
 
     #%% create sliders
     slider_n_params = [
@@ -22,24 +22,20 @@ def main():
         50,  # max
         25,  # start value
         1,  # step
+        "%f",  # format
     ]
-    slider_mean_params = [
-        "Sample mean (average)",
-        -4.0,
-        4.0,
-        2.0,
-        0.1,
-    ]
+    slider_mean_params = ["Sample mean (average)", -4.0, 4.0, 2.0, 0.1, "%f"]
     slider_sd_params = [
         'Standard deviation (SD) or "spread"',
         0.1,
         10.0,
         6.0,
         0.1,
+        "%f",
     ]
 
-    sidebar = st.sidebar.beta_container()
     st.sidebar.markdown("Change the values to simulate new data")
+    st.sidebar.markdown("#####")
     n = st.sidebar.slider(*slider_n_params)
     slider_n_params[3] = n
     st.markdown("#####")
@@ -67,7 +63,7 @@ def main():
     res = pg.ttest(df1["Happiness"], 0)
     df1["d"] = res["cohen-d"][0]
 
-    # %% plotting
+    # %% create figures
 
     x_domain = [-0.1, 0.1]
     y_domain = [-30, 30]
@@ -117,7 +113,7 @@ def main():
         alt.Chart(pd.DataFrame({"y": [0]}))
         .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
         .encode(y=alt.Y("y:Q", axis=alt.Axis(title="")))
-        .properties(height=fig_height)
+        # .properties(height=fig_height)
     )
 
     # %% violin
@@ -140,56 +136,58 @@ def main():
                 "Happiness:Q",
             ),
         )
-        .properties(height=fig_height)
+        # .properties(height=fig_height)
     )
 
     #%% combine figures
 
     finalfig = fig3 + fig2 + fig5 + fig1
     finalfig.configure_axis(grid=False)
+    finalfig.height = fig_height
     # finalfig.title = hline_b0["Model"][0]
 
-    #%% title and description
+    #%% app title and description
 
-    st.title("One-sample t-test")
+    st.markdown("# One-sample t-test")
     st.markdown(
         "We use the **one-sample t-test** when we have a **sample** (i.e., a set of $N$ data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value** (it can be any value, but let's assume it's 0 here)."
     )
-    st.markdown("## Are you happy or sad?")
-    st.markdown(
-        "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
+    st.markdown("### Are you happy or sad?")
+    st.write(
+        "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for",
+        n,
+        "days. Scores > 0 means you felt happy on those days; scores < 0 means you felt sad. Below, each dot is your happiness for one day (hover over the dots for more information), and the mean (average) across all days is ",
+        mean,
+        ".",
     )
-    expander_df = st.beta_expander("Click here to see the simulated data")
+
+    expander_df = st.beta_expander("Click here to see simulated data")
     with expander_df:
-        st.markdown(
-            "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
+        st.write(
+            "Your scores for each day (`i`) are in the `Happiness` column, ",
+            n,
+            "values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row.",
         )
+        # format dataframe output
         fmt = {
             "i": "{:.0f}",
             "Happiness": "{:.1f}",
             "Mean": "{:.1f}",
             "Residual": "{:.1f}",
         }
-        st.dataframe(
-            df1[["i", "Happiness", "Mean", "Residual"]].style.format(fmt),
-            height=233,
-        )
-    st.markdown("##### ")
-    st.markdown(
-        "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the one-sample t-test."
-    )
-    # To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
-    st.markdown("####")
+        dfcols = ["i", "Happiness", "Mean", "Residual"]  # cols to show
+        st.dataframe(df1[dfcols].style.format(fmt), height=233)
+    st.markdown("###### ")
 
     #%% show figure
 
-    st.altair_chart(finalfig, use_container_width=False)
+    _, column_fig, _ = st.beta_columns([0.1, 0.5, 0.1])  # hack to center figure
+    with column_fig:
+        st.altair_chart(finalfig, use_container_width=False)
 
-    #%% show t test results (optional)
+    #%% show t test results
 
-    my_expander = st.beta_expander(
-        "Click here to see detailed one-sample t-test results"
-    )
+    my_expander = st.beta_expander("Click here to see t-test results")
     with my_expander:
         st.markdown(
             "The values in green will update as you change the slider values above."
@@ -254,15 +252,16 @@ def main():
 
     # %% equations
 
-    # st.markdown("## General linear model")
-    # st.markdown(
-    #     "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/General_linear_model) is following linear equation:"
-    # )
+    st.markdown("##### ")
+    st.markdown(
+        "$y_i = b_0 + \epsilon_i$ is the general linear model for the one-sample t-test:"
+    )
+
     eq1 = "y_i = b_0 + \epsilon_i"
     st.latex(eq1.replace("b_0", str(mean)))
 
     st.markdown(
-        "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ (happiness scores for each day) and $\epsilon_i$ (residuals for each day) are shown in the dataframe above."
+        "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (the value at which the line crosses the $$y$$-axis), $\epsilon_i$ is the residual associated with data point $y_i$."
     )
     st.write(
         "This model says that the **best predictor of $y_i$ is $b_0$**, which is the **intercept** or the **mean** (or average) of all the data points ($b_0$ =",
@@ -270,13 +269,13 @@ def main():
         "). So if you want to predict any value $y_i$, use the mean of your sample.",
     )
     st.write(
-        "Since this model is very simple (i.e., predict every $y_i$ by assuming every $y_i$ equals the mean value of the sample: $y_i = b_0$), it can result in bad predictions. For example, your mean happiness is 2.0 ($b_0 = 2.0$), but on day 13, your score was 27 ($y_{13} = 27$). That is, $27 = 2.0 + \epsilon_{13}$, where $\epsilon_{13} = 25$ is the residual for that day—it's how wrong the model was."
+        "This model is very simple (i.e., predict every $y_i$ by assuming every $y_i$ equals the mean value of the sample: $y_i = b_0$), so it might make bad predictions. For example, your mean happiness is 2.0 ($b_0 = 2.0$), but on day 13, your score was 27 ($y_{13} = 27$). That is, $27 = 2.0 + \epsilon_{13}$, where $\epsilon_{13} = 25$ is the residual for that day—it's how wrong the model was."
     )
     st.markdown(
         "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear model or equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
     )
 
-    # %% show code
+    # %% show python/R code
 
     my_expander = st.beta_expander("Click to see Python and R code")
     with my_expander:
