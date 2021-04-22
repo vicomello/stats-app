@@ -130,9 +130,6 @@ def main():
         #with col42:
         code2 = st.slider(*code2_params)
         center_code = st.checkbox("Center code")
-        
-        # TODO add slider for coding (range -1 to 1)
-
 
     #%% make columns/containers
 
@@ -161,9 +158,7 @@ def main():
     df_all = pd.concat([df1, df2], axis=0)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
-    # TODO grand vs group mean  (transform method)
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
-    # TODO grand vs group mean residual
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
     df_all['Code_centered'] = df_all["Code"]-df_all['Code'].mean() 
@@ -177,13 +172,6 @@ def main():
     df_mean = (
         df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code","Code_centered"]]
     )
-
-    # t-test
-    #res = pg.ttest(df1["Happiness"], df2["Happiness"])
-    #df1["d"] = res["cohen-d"][0]
-    #TODO linear regression with pingouin
-
-    # TODO linear regression with pingouin
 
     #%% plot
 
@@ -329,10 +317,10 @@ def main():
         .transform_density(
             density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
         )
-        .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
+        .mark_area(orient="horizontal", opacity=0.3, color="#5F64C8")
         .encode(
             alt.X(
-                x_coding,
+                "density:Q",
                 title="",
                 stack="zero",
                 impute=None,
@@ -353,11 +341,11 @@ def main():
         .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
         .encode(
             alt.X(
-                x_coding,
+                "density:Q",
                 title="",
                 stack="zero",
                 impute=None,
-                axis=alt.Axis(labels=False, values=[0], grid=False, ticks=True),
+                axis=alt.Axis(labels=False, values=[1], grid=False, ticks=True),
             ),
             alt.Y(
                 "Happiness:Q",
@@ -365,13 +353,14 @@ def main():
         )
         .properties(height=fig_height)
     )
-    # TODO - change the color of the dots
 
     #%% combine figures
 
     #hline_b0 = pd.DataFrame(
     #    {"b0 (mean)": [mean], "N": [n], "SD": [sd], "Model": f"y = {mean} + e"},
     #)
+    
+    #%% TODO: pingouin linear regression
     # lm = pg.linear_regression(df1['Happiness'], df2['Happiness'])
     b1 = (((df1["Happiness"].mean().round(2))-(df2["Happiness"].mean().round(2)))/((df1["Code"].mean().round(1))-(df2["Code"].mean().round(1)))).round(1)
     model = f'y = {df1["Happiness"].mean().round(2)} + {b1}x1 + e'
