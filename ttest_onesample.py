@@ -1,42 +1,21 @@
 #%%
 
-import streamlit as st
+import altair as alt
 import numpy as np
 import pandas as pd
-import altair as alt
-import utils
 import pingouin as pg
+import streamlit as st
+
+import utils
 
 #%% config
 
 
 def main():
 
-    #%% title and description
-
-    st.title("One-sample t-test")
-    st.markdown(
-        "We use the **one-sample t-test** when we have a **sample** (i.e., a set of $N$ data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value** (it can be any value, but let's assume it's 0 here)."
-    )
-    st.markdown("## Are you happy or sad?")
-    st.markdown(
-        "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
-    )
-    st.markdown(
-        "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
-    )
-    st.markdown("## Interactive app")
-    st.markdown(
-        "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the one-sample t-test (more explanation below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
-    )
-    st.markdown("####")
-
-    #%% make columns/containers
-
-    col1, col2 = st.beta_columns(2)  # ratios of widths
+    #%% stuff for side bar
 
     #%% create sliders
-
     slider_n_params = [
         "Sample size (N, or no. of data points)",  # label
         2,  # min
@@ -59,21 +38,17 @@ def main():
         0.1,
     ]
 
-    col11 = st.sidebar.beta_container()
-    
-    with col11:
-        st.sidebar.markdown("Change the values to simulate new data")
-        n = st.slider(*slider_n_params)
-        slider_n_params[3] = n
-        st.markdown("#####")
-        # st.write("Degrees of freedom ($N - 1$): ", n - 1)
-        mean = st.slider(*slider_mean_params)
-        slider_mean_params[3] = mean
-        st.write("Mean = $b_0$ = intercept = ", mean)
-        st.markdown("#####")
-        sd = st.slider(*slider_sd_params)
-        slider_sd_params[3] = sd
-        # st.write("N, mean, SD: ", n, ",", mean, ",", sd)
+    sidebar = st.sidebar.beta_container()
+    st.sidebar.markdown("Change the values to simulate new data")
+    n = st.sidebar.slider(*slider_n_params)
+    slider_n_params[3] = n
+    st.markdown("#####")
+    mean = st.sidebar.slider(*slider_mean_params)
+    slider_mean_params[3] = mean
+    st.sidebar.write("Mean = $b_0$ = intercept = ", mean)
+    st.markdown("#####")
+    sd = st.sidebar.slider(*slider_sd_params)
+    slider_sd_params[3] = sd
 
     # %% create/show dataframe
 
@@ -92,24 +67,9 @@ def main():
     res = pg.ttest(df1["Happiness"], 0)
     df1["d"] = res["cohen-d"][0]
 
-    with col2:
-        fmt = {
-            "i": "{:.0f}",
-            "Happiness": "{:.1f}",
-            "Mean": "{:.1f}",
-            "Residual": "{:.1f}",
-        }
-        st.dataframe(
-            df1[["i", "Happiness", "Mean", "Residual"]].style.format(fmt),
-            height=360,
-        )
-
-    #%% generate and draw data points
+    # %% plotting
 
     x_domain = [-0.1, 0.1]
-    # y_max = (np.ceil(df1["Happiness"].max()) + 2.0) * 1.3
-    # y_min = (np.floor(df1["Happiness"].min()) - 2.0) * 1.3
-    # y_domain = [y_min, y_max]
     y_domain = [-30, 30]
     fig_height = 377
 
@@ -187,9 +147,43 @@ def main():
 
     finalfig = fig3 + fig2 + fig5 + fig1
     finalfig.configure_axis(grid=False)
-    finalfig.title = hline_b0["Model"][0]
-    with col1:
-        st.altair_chart(finalfig, use_container_width=True)
+    # finalfig.title = hline_b0["Model"][0]
+
+    #%% title and description
+
+    st.title("One-sample t-test")
+    st.markdown(
+        "We use the **one-sample t-test** when we have a **sample** (i.e., a set of $N$ data points we've collected) and we want to know whether the **mean of our sample** is **different from a specific value** (it can be any value, but let's assume it's 0 here)."
+    )
+    st.markdown("## Are you happy or sad?")
+    st.markdown(
+        "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
+    )
+    expander_df = st.beta_expander("Click here to see the simulated data")
+    with expander_df:
+        st.markdown(
+            "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
+        )
+        fmt = {
+            "i": "{:.0f}",
+            "Happiness": "{:.1f}",
+            "Mean": "{:.1f}",
+            "Residual": "{:.1f}",
+        }
+        st.dataframe(
+            df1[["i", "Happiness", "Mean", "Residual"]].style.format(fmt),
+            height=233,
+        )
+    st.markdown("##### ")
+    st.markdown(
+        "$y_i = b_0 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the one-sample t-test."
+    )
+    # To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
+    st.markdown("####")
+
+    #%% show figure
+
+    st.altair_chart(finalfig, use_container_width=False)
 
     #%% show t test results (optional)
 
@@ -260,12 +254,11 @@ def main():
 
     # %% equations
 
-    st.markdown("## General linear model")
-    st.markdown(
-        "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/General_linear_model) is following linear equation:"
-    )
+    # st.markdown("## General linear model")
+    # st.markdown(
+    #     "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/General_linear_model) is following linear equation:"
+    # )
     eq1 = "y_i = b_0 + \epsilon_i"
-    st.latex(eq1)
     st.latex(eq1.replace("b_0", str(mean)))
 
     st.markdown(
@@ -304,14 +297,3 @@ def main():
 
         st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
         st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
-
-    # %% container prompts
-
-    # my_expander = st.beta_expander("Test your intuition")
-    # with my_expander:
-    #     st.markdown("How does changing the sample size ($N$) change the results?")
-    #     st.markdown("answer")
-    #     st.markdown("######")
-    #     st.markdown("Question2 ")
-    #     st.markdown("answer")
-    #     st.markdown("######")
