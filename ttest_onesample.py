@@ -177,6 +177,7 @@ def main():
         }
         dfcols = ["i", "Happiness", "Mean", "Residual"]  # cols to show
         st.dataframe(df1[dfcols].style.format(fmt), height=233)
+
     st.markdown("###### ")
 
     #%% show figure

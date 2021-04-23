@@ -119,6 +119,10 @@ def main():
     with col42:
         code2 = st.slider(*code2_params)
     center_code = st.sidebar.checkbox("Center predictors")
+    if center_code:
+        x_coding = "Code_centered"
+    else:
+        x_coding = "Code"
 
     #%% simulate data
 
@@ -138,7 +142,7 @@ def main():
             "Group_mean": mean2,
         }
     )
-    df_all = pd.concat([df1, df2], axis=0)
+    df_all = pd.concat([df1, df2], axis=0).reset_index(drop=True)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
@@ -146,6 +150,7 @@ def main():
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
 
+    # TODO fix this section
     # create tooltip for plot (Model: ...)
     for i in df_all.itertuples():
         df_all.loc[
@@ -153,8 +158,12 @@ def main():
         ] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
     # group mean
+
     df_mean = (
-        df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code"]]
+        df_all.groupby("Species")
+        .mean()
+        .reset_index()[["Species", "Happiness", x_coding]]
+        .round(2)
     )
 
     #%% ttest and linear regression
@@ -169,12 +178,6 @@ def main():
     b1 = df_results.at[1, "coef"]
     model = f"y = {np.round(b0, 2)} + {np.round(b1, 2)}x1 + e"
 
-    #%% Centering the coding based on the checkbox
-    if center_code == True:
-        x_coding = "Code_centered:Q"
-    else:
-        x_coding = "Code:Q"
-
     # %% plot
 
     x_domain = [-1.15, 1.15]
@@ -186,7 +189,7 @@ def main():
         .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#57106e", opacity=0.5)
         .encode(
             x=alt.X(
-                x_coding,
+                f"{x_coding}:Q",
                 scale=alt.Scale(domain=x_domain),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
             ),
@@ -202,29 +205,7 @@ def main():
         .properties(height=377, width=477)
     )
 
-    #%% horizontal line for b0 mean
-
-    hline_b0 = pd.DataFrame(
-        {
-            "b0 (mean)": [df_all["Happiness"].mean().round(2)],
-            "N": [n + n2],
-            "SD": [sd],
-            "Model": f"y = {mean} + e",
-        },
-    )
-
-    #  fig4 = (
-    #      alt.Chart(hline_b0)
-    #      .mark_rule(size=3.4, color="#bc3754")
-    #      .encode(
-    #          y=alt.Y("b0 (mean):Q", axis=alt.Axis(title="")),
-    #          tooltip=["Model", "b0 (mean)", "SD", "N"],
-    #      )
-    #      .interactive()
-    #      .properties(width=233, height=377)
-    #  )
-
-    #%% intercepts
+    #%% x and y axes lines
 
     fig4 = (
         alt.Chart(pd.DataFrame({"y": [0]}))
@@ -243,31 +224,37 @@ def main():
     # %% violin
     # https://altair-viz.github.io/gallery/violin_plot.html
 
-    # fig5 = (
-    #     alt.Chart(df_all)
-    #     .transform_density(
-    #         density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
-    #     )
-    #     .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
-    #     .encode(
-    #         alt.X(
-    #             "Species:N",
-    #             title="",
-    #             stack="zero",
-    #             impute=None,
-    #             axis=alt.Axis(labels=False, values=[0], grid=False, ticks=True),
-    #         ),
-    #         alt.Y(
-    #             "Happiness:Q",
-    #         ),
-    #         color=alt.Color("Species"),
-    #     )
-    #     .properties(height=fig_height)
-    # )
+    fig_violin = (
+        alt.Chart(df_all)
+        .transform_density(
+            density="Happiness",
+            as_=["Happiness", "density"],
+            bandwidth=2.0,
+            groupby=["Species"],
+        )
+        .mark_area(orient="horizontal", opacity=0.8, color="#f98e09")
+        .encode(
+            x=alt.X(
+                "density:Q",
+                title="",
+                stack="zero",
+                impute=None,
+                axis=alt.Axis(grid=False, tickCount=0),
+            ),
+            y=alt.Y(
+                "Happiness:Q",
+                scale=alt.Scale(domain=y_domain),
+                title="",
+                axis=alt.Axis(grid=False, tickCount=0),
+            ),
+            color=alt.Color("Species"),
+            tooltip=["Happiness"],
+        )
+        .interactive()
+        .properties(height=fig_height, width=55)
+    )
 
     #%% fig 2: the means for each sample and a line connecting them
-
-    # df_means = df_all.groupby("Species")
 
     # plot means
     fig2 = (
@@ -275,7 +262,7 @@ def main():
         .mark_point(filled=True, size=144)
         .encode(
             x=alt.X(
-                x_coding,
+                f"{x_coding}:Q",
                 scale=alt.Scale(domain=x_domain),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
             ),
@@ -285,7 +272,7 @@ def main():
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
             color=alt.Color("Species"),
-            tooltip=["Happiness", "Code"],
+            tooltip=["Happiness", x_coding],
         )
         .interactive()
     )
@@ -296,62 +283,25 @@ def main():
         .mark_line(color="black")
         .encode(
             x=alt.X(
-                x_coding,
+                f"{x_coding}:Q",
                 scale=alt.Scale(domain=x_domain),
-                # axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
             ),
             y=alt.Y(
                 "Happiness:Q",
                 scale=alt.Scale(domain=y_domain),
-                axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
+                axis=alt.Axis(grid=False, title="", titleFontSize=13),
             ),
         )
         .interactive()
     )
 
-    #%% violin plots
-    fig6 = (
-        alt.Chart(df1)
-        .transform_density(
-            density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
-        )
-        .mark_area(orient="horizontal", opacity=0.3, color="#5F64C8")
-        .encode(
-            alt.X(
-                "density:Q",
-                title="",
-                stack="zero",
-                impute=None,
-                axis=alt.Axis(labels=False, values=[0], grid=False, ticks=True),
-            ),
-            alt.Y(
-                "Happiness:Q",
-            ),
-        )
-        .properties(height=fig_height)
-    )
+    # %% show figurs
 
-    fig7 = (
-        alt.Chart(df2)
-        .transform_density(
-            density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
-        )
-        .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
-        .encode(
-            alt.X(
-                "density:Q",
-                title="",
-                stack="zero",
-                impute=None,
-                axis=alt.Axis(labels=False, values=[1], grid=False, ticks=True),
-            ),
-            alt.Y(
-                "Happiness:Q",
-            ),
-        )
-        .properties(height=fig_height)
-    )
+    finalfig = (fig1 + fig2 + fig3 + fig4 + fig5) | fig_violin
+    finalfig.configure_axis(grid=False)
+    finalfig.configure_view(stroke=None)
+    # finalfig.title = model
 
     #%% title and description
     st.title("Independent-samples t-test")
@@ -366,14 +316,27 @@ def main():
     expander_df = st.beta_expander("Click here to see the simulated data")
     with expander_df:
         st.markdown(
-            "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
+            "Your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
         )
+        # format dataframe output
+        fmt = {
+            "i": "{:.0f}",
+            "Happiness": "{:.1f}",
+            "Code": "{:.2f}",
+            "Mean": "{:.1f}",
+            "Residual": "{:.1f}",
+        }
+        dfcols = [
+            "i",
+            "Species",
+            "Code",
+            "Happiness",
+            "Mean",
+            "Residual",
+        ]  # cols to show
+        st.dataframe(df_all[dfcols].style.format(fmt), height=233)
 
-        st.dataframe(
-            # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
-            df_all[["i", "Species", "Code", "Happiness", "Mean", "Residual"]],
-            height=233,
-        )
+    st.altair_chart(finalfig, use_container_width=False)
 
     # st.markdown("### Interactive app")
     st.markdown("###### ")
@@ -384,13 +347,6 @@ def main():
     # more text
     # To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
 
-    # %% show figurs
-
-    finalfig = fig1 + fig2 + fig3 + fig4 + fig5 + fig6 + fig7
-    finalfig.configure_axis(grid=False)
-    finalfig.title = model
-    st.altair_chart(finalfig, use_container_width=False)
-
     #%% show dataframe
 
     #%% calculate t test to show to them
@@ -399,9 +355,7 @@ def main():
 
     #%% show t test results (optional)
 
-    expander_ttest = st.beta_expander(
-        "Click here to see detailed independent-samples t-test results"
-    )
+    expander_ttest = st.beta_expander("Click here to see t-test results")
     with expander_ttest:
         st.markdown(
             "The values in green will update as you change the slider values above."
@@ -466,14 +420,11 @@ def main():
 
     # %% equations
 
-    st.markdown("## General linear model")
-    st.markdown(
-        "The one-sample t-test [general linear model](https://en.wikipedia.org/wiki/General_linear_model) is following linear equation:"
-    )
     eq1 = "y_i = b_0 + b_1 x_1 + \epsilon_i"
-    eq1 = eq1.replace("b_0", str(np.round(b0, 2)))
-    eq1 = eq1.replace("b_1", str(np.round(b1, 2)))
     st.latex(eq1)
+    eq2 = eq1.replace("b_0", str(np.round(b0, 2)))
+    eq2 = eq2.replace("b_1", str(np.round(b1, 2)))
+    st.latex(eq2)
 
     st.markdown(
         "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ (happiness scores for each day) and $\epsilon_i$ (residuals for each day) are shown in the dataframe above."
