@@ -12,39 +12,25 @@ import utils
 #%% config
 def main():
 
-    #%% title and description
-    st.markdown("# Independent-samples t-test")
-    st.markdown(
-        "We use the **independent-samples t-test** when we have **two unrelated (independent) samples** (i.e., two distinct datasets with $N$ data points each) and we want to know whether the mean of the two samples are different from each other."
-    )
-
-    st.markdown("### Who's happier—humans or Martians?")
-    st.markdown(
-        "You want to know whether you're happy or sad in general, so you recorded your own happiness, once a day, for 25 days (i.e., $N = 25$). Scores > 0 means you felt happy on those days; scores < 0 means you felt sad; 0 means you felt neutral."
-    )
-    st.markdown(
-        "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
-    )
-    st.markdown("### Interactive app")
-    st.markdown(
-        "$y_i = b_0 + b_1 x_1 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the independent-samples t-test (more explanation below). To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
-    )
+    #%% sidebar
 
     #%% create sliders for humans
 
     slider_n_params = [
-        "",  # label
+        " ",  # label
         2,  # min
         50,  # max
         25,  # start value
         1,  # step
+        "%f",  # format
     ]
     slider_mean_params = [
-        "",
-        -4.0,
-        4.0,
+        "  ",
+        -6.0,
+        6.0,
         2.0,
         0.1,
+        "%f",  # format
     ]
     slider_sd_params = [
         "",
@@ -52,23 +38,26 @@ def main():
         10.0,
         6.0,
         0.1,
+        "%f",  # format
     ]
 
     #%% create sliders for martians
 
     slider_n2_params = [
-        " ",  # label
+        "",  # label
         2,  # min
         50,  # max
-        25,  # start value
+        30,  # start value
         1,  # step
+        "%f",  # format
     ]
     slider_mean2_params = [
         "",
-        -4.0,
-        4.0,
+        -6.0,
         6.0,
+        3.0,
         0.1,
+        "%f",  # format
     ]
     slider_sd2_params = [
         "",
@@ -76,13 +65,14 @@ def main():
         10.0,
         4.0,
         0.1,
+        "%f",  # format
     ]
 
     # sidebar headers
-    col01, col02 = st.sidebar.beta_columns(2)  # ratios of widths
-    with col01:
+    sidebar_headers = st.sidebar.beta_columns(2)  # ratios of widths
+    with sidebar_headers[0]:
         st.markdown("### Humans")
-    with col02:
+    with sidebar_headers[1]:
         st.markdown("### Martians")
 
     # sidebar columns - sample size
@@ -117,23 +107,18 @@ def main():
         sd2 = st.slider(*slider_sd2_params)
         slider_sd2_params[3] = sd2
 
-    code1_params = ["Humans", -1.0, 1.0, 0.0, 0.1]
-    code2_params = ["Martians", -1.0, 1.0, 1.0, 0.1]
+    code1_params = [" ", -1.0, 1.0, 0.0, 0.01]
+    code2_params = ["  ", -1.0, 1.0, 1.0, 0.01]
 
     # sidebar container - advanced settings
-    sidebar_expander = st.sidebar.beta_expander("Click for more sliders")
+    st.sidebar.write("#### Advanced options")
+    st.sidebar.text("Change code for each group")
     col41, col42 = st.sidebar.beta_columns(2)
-    with sidebar_expander:
-        st.text("Change the code for each group.")
-        # with col41:
+    with col41:
         code1 = st.slider(*code1_params)
-        # with col42:
+    with col42:
         code2 = st.slider(*code2_params)
-        center_code = st.checkbox("Center code")
-
-    #%% make columns/containers
-
-    col2, _, col3 = st.beta_columns([0.3, 0.2, 0.5])  # ratios of widths
+    center_code = st.sidebar.checkbox("Center predictors")
 
     #%% simulate data
 
@@ -142,7 +127,7 @@ def main():
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
             "Species": "Human",
             "Code": code1,
-            "Group_Mean": mean,
+            "Group_mean": mean,
         }
     )
     df2 = pd.DataFrame(
@@ -150,18 +135,17 @@ def main():
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
             "Species": "Martian",
             "Code": code2,
-            "Group_Mean": mean2,
+            "Group_mean": mean2,
         }
     )
-    #%% Creating dataframe
-
     df_all = pd.concat([df1, df2], axis=0)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
+    # TODO grand vs group mean residual
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
-    df_all["Code_centered"] = df_all["Code"] - df_all["Code"].mean()
+
     # create tooltip for plot (Model: ...)
     for i in df_all.itertuples():
         df_all.loc[
@@ -170,24 +154,31 @@ def main():
 
     # group mean
     df_mean = (
-        df_all.groupby("Species")
-        .mean()
-        .reset_index()[["Species", "Happiness", "Code", "Code_centered"]]
+        df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code"]]
     )
 
-    #%% plot
+    # t-test
+    res = pg.ttest(df1["Happiness"], df2["Happiness"])
+    # linear regrerssion
+    X = df_all[["Code"]]
+    if center_code:
+        X = df_all[["Code_centered"]]
 
-    x_domain = [-1.15, 1.15]
-    y_domain = [-30, 30]
-    fig_height = 377
-
-    # TODO change x tick locations?
+    df_results = pg.linear_regression(X, df_all["Happiness"], add_intercept=True)
+    b0 = df_results.at[0, "coef"]
+    b1 = df_results.at[1, "coef"]
 
     #%% Centering the coding based on the checkbox
     if center_code == True:
         x_coding = "Code_centered:Q"
     else:
         x_coding = "Code:Q"
+
+    # %% plot
+
+    x_domain = [-1.15, 1.15]
+    y_domain = [-30, 30]
+    fig_height = 377
 
     fig1 = (
         alt.Chart(df_all)
@@ -196,10 +187,7 @@ def main():
             x=alt.X(
                 x_coding,
                 scale=alt.Scale(domain=x_domain),
-                # axis=alt.Axis(grid=False, title="", tickCount=2, labels=False),
                 axis=alt.Axis(grid=False, title="", tickCount=2),
-                # labelExpr:string
-                # labelAlign:anyOf
             ),
             y=alt.Y(
                 "Happiness:Q",
@@ -387,33 +375,14 @@ def main():
     # ).round(1)
     model = f"y = {np.round(b0, 2)} + {np.round(b1, 2)}x1 + e"
 
+    # %% show figurs
+
     finalfig = fig1 + fig2 + fig3 + fig4 + fig5 + fig6 + fig7
     finalfig.configure_axis(grid=False)
     finalfig.title = model
-    with col2:
-        st.altair_chart(finalfig, use_container_width=False)
+    st.altair_chart(finalfig, use_container_width=False)
 
     #%% show dataframe
-
-    with col3:
-        # st.markdown(
-        #     "Simulated sample data (each row is one simulated data point $y_i$)"
-        # )
-        st.dataframe(
-            # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
-            df_all[
-                [
-                    "i",
-                    "Species",
-                    "Code",
-                    "Code_centered",
-                    "Happiness",
-                    "Mean",
-                    "Residual",
-                ]
-            ],
-            height=360,
-        )
 
     #%% calculate t test to show to them
     res = pg.ttest(df1["Happiness"], df2["Happiness"])
@@ -421,8 +390,10 @@ def main():
 
     #%% show t test results (optional)
 
-    my_expander = st.beta_expander("Click here to see t-test results")
-    with my_expander:
+    expander_ttest = st.beta_expander(
+        "Click here to see detailed independent-samples t-test results"
+    )
+    with expander_ttest:
         st.markdown(
             "The values in green will update as you change the slider values above."
         )
@@ -509,7 +480,6 @@ def main():
     st.markdown(
         "Note that there is only $b_0$ (intercept) in the equation. There aren't $b_1$, $b_2$ and so on—there are no slopes (i.e., the slopes are 0). Thus, the one-sample t-test is just a linear model or equation with a **horizontal line** that crosses the y-intercept at $b_0$, which is the mean of the sample."
     )
-
     # %% show code
 
     my_expander = st.beta_expander("Click to see Python and R code")
@@ -519,7 +489,7 @@ def main():
         )
 
         st.markdown(
-            "Python: `pingouin.ttest(y, 0)`  # t-test against 0 (can be any other value)"
+            "Python: `pingouin.ttest(y_group1, y_group2)`  # t-test against 0 (can be any other value)"
         )
         st.markdown(
             "Python: `scipy.stats.ttest_1samp(y, 0)`  # t-test against 0 (can be any other value)"
@@ -531,6 +501,9 @@ def main():
 
         st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
         st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
-
-
-# %%
+        st.markdown(
+            "R: `lm(y ~ condition)`  # linear model - intercept term is implicitly added"
+        )
+        st.markdown(
+            "R: `lm(y ~ 1 + condition)`  # same as above - explicitly including intercept term"
+        )

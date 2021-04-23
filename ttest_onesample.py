@@ -253,11 +253,8 @@ def main():
     # %% equations
 
     st.markdown("##### ")
-    st.markdown(
-        "$y_i = b_0 + \epsilon_i$ is the general linear model for the one-sample t-test:"
-    )
-
     eq1 = "y_i = b_0 + \epsilon_i"
+    st.latex(eq1)
     st.latex(eq1.replace("b_0", str(mean)))
 
     st.markdown(
