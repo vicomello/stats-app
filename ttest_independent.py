@@ -142,7 +142,7 @@ def main():
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
-    # TODO grand vs group mean residual
+    df_all["Code_centered"] = df_all["Code"] - df_all["Code"].mean()
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
 
@@ -157,16 +157,17 @@ def main():
         df_all.groupby("Species").mean().reset_index()[["Species", "Happiness", "Code"]]
     )
 
-    # t-test
-    res = pg.ttest(df1["Happiness"], df2["Happiness"])
-    # linear regrerssion
+    #%% ttest and linear regression
+
     X = df_all[["Code"]]
     if center_code:
         X = df_all[["Code_centered"]]
 
-    df_results = pg.linear_regression(X, df_all["Happiness"], add_intercept=True)
+    y = df_all["Happiness"]
+    df_results = pg.linear_regression(X, y, add_intercept=True)
     b0 = df_results.at[0, "coef"]
     b1 = df_results.at[1, "coef"]
+    model = f"y = {np.round(b0, 2)} + {np.round(b1, 2)}x1 + e"
 
     #%% Centering the coding based on the checkbox
     if center_code == True:
@@ -352,28 +353,36 @@ def main():
         .properties(height=fig_height)
     )
 
-    #%% combine figures
+    #%% title and description
+    st.title("Independent-samples t-test")
+    st.markdown(
+        "We use the **independent-samples t-test** when we have **two unrelated (independent) samples** (i.e., two distinct datasets with $N$ data points each) and we want to know whether the mean of the two samples are different from each other."
+    )
+    st.markdown("### Who's happier—humans or Martians?")
+    st.markdown(
+        "Humans and Martians disagree on who is happier, so each species gathered a bunch of their own members and recorded their happiness for a day. Scores > 0 means above-average happiness; scores < 0 means below-average happiness. Their happiness scores are shown below."
+    )
 
-    # hline_b0 = pd.DataFrame(
-    #    {"b0 (mean)": [mean], "N": [n], "SD": [sd], "Model": f"y = {mean} + e"},
+    expander_df = st.beta_expander("Click here to see the simulated data")
+    with expander_df:
+        st.markdown(
+            "In the dataframe below, your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
+        )
+
+        st.dataframe(
+            # df_all[["i", "Happiness", "Mean", "Residual"]].style.format("{:.1f}"),
+            df_all[["i", "Species", "Code", "Happiness", "Mean", "Residual"]],
+            height=233,
+        )
+
+    # st.markdown("### Interactive app")
+    st.markdown("###### ")
+    # st.markdown(
+    #     "$y_i = b_0 + b_1 x_1 + \epsilon_i$ is the [general linear model](https://en.wikipedia.org/wiki/General_linear_model) for the independent-samples t-test (more explanation below)."
     # )
 
-    #%%
-
-    X = df_all[["Code"]]
-    if center_code:
-        X = df_all[["Code_centered"]]
-
-    y = df_all["Happiness"]
-    df_results = pg.linear_regression(X, y, add_intercept=True)
-    b0 = df_results.at[0, "coef"]
-    b1 = df_results.at[1, "coef"]
-
-    # b1 = (
-    #     ((df1["Happiness"].mean().round(2)) - (df2["Happiness"].mean().round(2)))
-    #     / ((df1["Code"].mean().round(1)) - (df2["Code"].mean().round(1)))
-    # ).round(1)
-    model = f"y = {np.round(b0, 2)} + {np.round(b1, 2)}x1 + e"
+    # more text
+    # To develop an intuition, change the values in the sliders below, explore the (simulated) data in the dataframe (click any column name to sort by that column), or hover over the data points on the interactive figure to understand this model. To reset to the default values, refresh the page."
 
     # %% show figurs
 
