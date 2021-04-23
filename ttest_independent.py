@@ -209,7 +209,7 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color=alt.Color("Species", scale=alt.Scale(scheme="magma")),
+            color=alt.Color("Species", scale=alt.Scale(scheme="viridis")),
             tooltip=["i", "Happiness", "Mean", "Group_mean"],
         )
         .interactive()
@@ -243,7 +243,7 @@ def main():
             bandwidth=2.0,
             groupby=["Species"],
         )
-        .mark_area(orient="horizontal", opacity=0.8, color="#f98e09")
+        .mark_area(orient="horizontal", opacity=0.8)
         .encode(
             x=alt.X(
                 "density:Q",
@@ -270,7 +270,7 @@ def main():
     # plot means
     fig2 = (
         alt.Chart(df_mean)
-        .mark_point(filled=True, size=144)
+        .mark_point(filled=True, size=233)
         .encode(
             x=alt.X(
                 f"{x_coding}:Q",
@@ -292,7 +292,7 @@ def main():
     # connect means with line
     fig3 = (
         alt.Chart(df_mean)
-        .mark_line(color="#bc3754", size=3.4)
+        .mark_line(color="#51127c", size=3)
         .encode(
             x=alt.X(
                 f"{x_coding}:Q",
@@ -304,7 +304,7 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="", titleFontSize=13),
             ),
-            # tooltip=[""], # TODO add tooltip
+            # tooltip=[""], # TODO add tooltip so interactive works!
         )
         .interactive()
         .properties(height=fig_height)

@@ -71,7 +71,7 @@ def main():
 
     fig1 = (
         alt.Chart(df1)
-        .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#57106e", opacity=0.6)
+        .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#3b528b", opacity=0.8)
         .encode(
             x=alt.X(
                 "Rating:Q",
@@ -98,7 +98,7 @@ def main():
 
     fig2 = (
         alt.Chart(hline_b0)
-        .mark_rule(size=3.4, color="#bc3754")
+        .mark_rule(size=3, color="#51127c")
         .encode(
             y=alt.Y("b0 (mean):Q", axis=alt.Axis(title="")),
             tooltip=["Model", "b0 (mean)", "SD", "N"],
@@ -123,7 +123,7 @@ def main():
         .transform_density(
             density="Happiness", as_=["Happiness", "density"], bandwidth=2.0
         )
-        .mark_area(orient="horizontal", opacity=0.3, color="#f98e09")
+        .mark_area(orient="horizontal", opacity=0.3, color="#3b528b")
         .encode(
             alt.X(
                 "density:Q",
