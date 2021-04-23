@@ -8,7 +8,6 @@ import streamlit as st
 
 import utils
 
-
 #%% config
 def main():
 
@@ -20,7 +19,7 @@ def main():
         " ",  # label
         2,  # min
         50,  # max
-        25,  # start value
+        10,  # start value
         1,  # step
         "%f",  # format
     ]
@@ -28,7 +27,7 @@ def main():
         "  ",
         -6.0,
         6.0,
-        2.0,
+        -3.0,
         0.1,
         "%f",  # format
     ]
@@ -36,7 +35,7 @@ def main():
         "",
         0.1,
         10.0,
-        6.0,
+        5.0,
         0.1,
         "%f",  # format
     ]
@@ -47,7 +46,7 @@ def main():
         "",  # label
         2,  # min
         50,  # max
-        30,  # start value
+        10,  # start value
         1,  # step
         "%f",  # format
     ]
@@ -60,20 +59,21 @@ def main():
         "%f",  # format
     ]
     slider_sd2_params = [
-        "",
+        "   ",
         0.1,
         10.0,
-        4.0,
+        5.0,
         0.1,
         "%f",  # format
     ]
 
+    st.sidebar.markdown("Change values to simulate new data")
     # sidebar headers
     sidebar_headers = st.sidebar.beta_columns(2)  # ratios of widths
     with sidebar_headers[0]:
-        st.markdown("### Humans")
+        st.markdown("#### Humans")
     with sidebar_headers[1]:
-        st.markdown("### Martians")
+        st.markdown("#### Martians")
 
     # sidebar columns - sample size
     st.sidebar.markdown("#### ")
@@ -111,18 +111,25 @@ def main():
     code2_params = ["  ", -1.0, 1.0, 1.0, 0.01]
 
     # sidebar container - advanced settings
-    st.sidebar.write("#### Advanced options")
-    st.sidebar.text("Change code for each group")
+    st.sidebar.markdown("#### Advanced options")
+    st.sidebar.markdown("##### Predictor (code assigned to each group)")
+    st.sidebar.markdown("###### Default is 0-1 dummy code")
     col41, col42 = st.sidebar.beta_columns(2)
     with col41:
         code1 = st.slider(*code1_params)
+        code1_params[3] = code1
     with col42:
         code2 = st.slider(*code2_params)
-    center_code = st.sidebar.checkbox("Center predictors")
+        code2_params[3] = code2
+    if code1 == code2:
+        code2_params[3] = code2 + 0.01
+        code2 = st.slider(*code2_params)
+
+    center_code = st.sidebar.checkbox("Mean-center predictor")
     if center_code:
-        x_coding = "Code_centered"
+        x_coding = "Predictor_code_centered"
     else:
-        x_coding = "Code"
+        x_coding = "Predictor_code"
 
     #%% simulate data
 
@@ -130,7 +137,7 @@ def main():
         {
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
             "Species": "Human",
-            "Code": code1,
+            "Predictor_code": code1,
             "Group_mean": mean,
         }
     )
@@ -138,7 +145,7 @@ def main():
         {
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
             "Species": "Martian",
-            "Code": code2,
+            "Predictor_code": code2,
             "Group_mean": mean2,
         }
     )
@@ -146,7 +153,9 @@ def main():
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
     df_all["Mean"] = df_all["Happiness"].mean().round(2)
-    df_all["Code_centered"] = df_all["Code"] - df_all["Code"].mean()
+    df_all["Predictor_code_centered"] = (
+        df_all["Predictor_code"] - df_all["Predictor_code"].mean()
+    )
     df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
     df_all["Residual"] = df_all["Residual"].round(2)
 
@@ -162,21 +171,23 @@ def main():
     df_mean = (
         df_all.groupby("Species")
         .mean()
-        .reset_index()[["Species", "Happiness", x_coding]]
+        .reset_index()[
+            ["Species", "Happiness", "Predictor_code", "Predictor_code_centered"]
+        ]
         .round(2)
     )
 
     #%% ttest and linear regression
 
-    X = df_all[["Code"]]
+    X = df_all[["Predictor_code"]]
     if center_code:
-        X = df_all[["Code_centered"]]
+        X = df_all[["Predictor_code_centered"]]
 
     y = df_all["Happiness"]
     df_results = pg.linear_regression(X, y, add_intercept=True)
-    b0 = df_results.at[0, "coef"]
-    b1 = df_results.at[1, "coef"]
-    model = f"y = {np.round(b0, 2)} + {np.round(b1, 2)}x1 + e"
+    b0 = df_results.at[0, "coef"].round(2)
+    b1 = df_results.at[1, "coef"].round(2)
+    model = f"y = {b0:.2f} + {b1:.2f}x1 + e"
 
     # %% plot
 
@@ -186,23 +197,23 @@ def main():
 
     fig1 = (
         alt.Chart(df_all)
-        .mark_circle(size=(89 / np.sqrt(n)) * 2, color="#57106e", opacity=0.5)
+        .mark_circle(size=(89 / np.sqrt(n)) * 2, opacity=0.5)
         .encode(
             x=alt.X(
                 f"{x_coding}:Q",
                 scale=alt.Scale(domain=x_domain),
-                axis=alt.Axis(grid=False, title="", tickCount=2),
+                axis=alt.Axis(grid=False, title="", tickCount=5),
             ),
             y=alt.Y(
                 "Happiness:Q",
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
-            color=alt.Color("Species"),
-            tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
+            color=alt.Color("Species", scale=alt.Scale(scheme="magma")),
+            tooltip=["i", "Happiness", "Mean", "Group_mean"],
         )
         .interactive()
-        .properties(height=377, width=477)
+        .properties(height=377)
     )
 
     #%% x and y axes lines
@@ -275,12 +286,13 @@ def main():
             tooltip=["Happiness", x_coding],
         )
         .interactive()
+        .properties(height=fig_height)
     )
 
     # connect means with line
     fig3 = (
         alt.Chart(df_mean)
-        .mark_line(color="black")
+        .mark_line(color="#bc3754", size=3.4)
         .encode(
             x=alt.X(
                 f"{x_coding}:Q",
@@ -292,16 +304,17 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False, title="", titleFontSize=13),
             ),
+            # tooltip=[""], # TODO add tooltip
         )
         .interactive()
+        .properties(height=fig_height)
     )
 
-    # %% show figurs
+    # %% combine figurs
 
     finalfig = (fig1 + fig2 + fig3 + fig4 + fig5) | fig_violin
     finalfig.configure_axis(grid=False)
     finalfig.configure_view(stroke=None)
-    # finalfig.title = model
 
     #%% title and description
     st.title("Independent-samples t-test")
@@ -313,7 +326,7 @@ def main():
         "Humans and Martians disagree on who is happier, so each species gathered a bunch of their own members and recorded their happiness for a day. Scores > 0 means above-average happiness; scores < 0 means below-average happiness. Their happiness scores are shown below."
     )
 
-    expander_df = st.beta_expander("Click here to see the simulated data")
+    expander_df = st.beta_expander("Click here to see simulated data")
     with expander_df:
         st.markdown(
             "Your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
@@ -322,21 +335,28 @@ def main():
         fmt = {
             "i": "{:.0f}",
             "Happiness": "{:.1f}",
-            "Code": "{:.2f}",
+            "Predictor_code": "{:.2f}",
+            "Predictor_code_centered": "{:.2f}",
             "Mean": "{:.1f}",
             "Residual": "{:.1f}",
         }
         dfcols = [
             "i",
             "Species",
-            "Code",
             "Happiness",
             "Mean",
+            "Predictor_code",
+            "Predictor_code_centered",
             "Residual",
         ]  # cols to show
+        if not center_code:
+            dfcols.remove("Predictor_code_centered")
         st.dataframe(df_all[dfcols].style.format(fmt), height=233)
 
-    st.altair_chart(finalfig, use_container_width=False)
+    # show figure
+    _, col_fig, _ = st.beta_columns([0.05, 0.5, 0.1])  # hack to center figure
+    with col_fig:
+        st.altair_chart(finalfig, use_container_width=False)
 
     # st.markdown("### Interactive app")
     st.markdown("###### ")
@@ -353,13 +373,13 @@ def main():
     res = pg.ttest(df1["Happiness"], df2["Happiness"])
     # df1["d"] = res["cohen-d"][0]
 
-    #%% show t test results (optional)
+    #%% show t test results
 
     expander_ttest = st.beta_expander("Click here to see t-test results")
     with expander_ttest:
-        st.markdown(
-            "The values in green will update as you change the slider values above."
-        )
+        # st.markdown(
+        #     "The values in green will update as you change the slider values above."
+        # )
         res_list = []
         res_list.append(res["dof"].round(0)[0])  # df
         res_list.append(res["T"].round(2)[0])
@@ -397,14 +417,17 @@ def main():
             res_list[5],
         )
 
-        eq1 = r"t = \frac{\bar{y} - \mu_{0}}{SE_{\bar{y}}} = \frac{MEAN - 0}{STERR} = TVAL"
+        eq1 = r"t = \frac{ \bar{y}_{group_1} - \bar{y}_{group_2}  }{ SE_{ \bar{y}_{pooled} } } = \frac{MEAN1 - MEAN2}{STERR} = TVAL"
         eq1 = (
-            eq1.replace("MEAN", str(mean))
-            .replace("STERR", str(np.round(sd / np.sqrt(n), 2)))
+            eq1.replace("MEAN1", str(mean))
+            .replace("MEAN2", str(mean2))
+            .replace(
+                "STERR", str(np.round(sd / np.sqrt(n), 2))
+            )  # FIXME fix standard error!
             .replace("TVAL", str(res_list[1]))
         )
-        st.latex(eq1)
-        st.latex(r"SE_{\bar{y}} = \frac{SD}{\sqrt{N}}")
+        # st.latex(eq1)
+        # st.latex(r"SE_{\bar{y}} = \frac{SD}{\sqrt{N}}")
 
         st.write(
             """
@@ -426,12 +449,13 @@ def main():
     eq2 = eq2.replace("b_1", str(np.round(b1, 2)))
     st.latex(eq2)
 
+    # FIXME fix text in this section!
     st.markdown(
         "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (i.e., the value of $y$ when $x$ is 0), $\epsilon_i$ is the residual associated with data point $y_i$. Simulated $y_i$ (happiness scores for each day) and $\epsilon_i$ (residuals for each day) are shown in the dataframe above."
     )
     st.write(
         "This model says that the **best predictor of $y_i$ is $b_0$**, which is the **intercept** or the **mean** (or average) of all the data points ($b_0$ =",
-        mean,
+        b0,
         "). So if you want to predict any value $y_i$, use the mean of your sample.",
     )
     st.write(

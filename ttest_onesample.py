@@ -20,7 +20,7 @@ def main():
         "Sample size (N, or no. of data points)",  # label
         2,  # min
         50,  # max
-        25,  # start value
+        14,  # start value
         1,  # step
         "%f",  # format
     ]
@@ -29,12 +29,12 @@ def main():
         'Standard deviation (SD) or "spread"',
         0.1,
         10.0,
-        6.0,
+        7.0,
         0.1,
         "%f",
     ]
 
-    st.sidebar.markdown("Change the values to simulate new data")
+    st.sidebar.markdown("Change values to simulate new data")
     st.sidebar.markdown("#####")
     n = st.sidebar.slider(*slider_n_params)
     slider_n_params[3] = n
@@ -85,7 +85,7 @@ def main():
             ),
             tooltip=["i", "Happiness", "Mean", "Residual", "Model"],
         )
-        # .properties(width=144, height=377)
+        .properties(height=377)
         # .properties(title="General linear model")
         .interactive()
     )
@@ -136,7 +136,6 @@ def main():
                 "Happiness:Q",
             ),
         )
-        # .properties(height=fig_height)
     )
 
     #%% combine figures
@@ -178,21 +177,16 @@ def main():
         dfcols = ["i", "Happiness", "Mean", "Residual"]  # cols to show
         st.dataframe(df1[dfcols].style.format(fmt), height=233)
 
-    st.markdown("###### ")
-
     #%% show figure
 
-    _, column_fig, _ = st.beta_columns([0.1, 0.5, 0.1])  # hack to center figure
-    with column_fig:
+    _, col_fig, _ = st.beta_columns([0.1, 0.5, 0.1])  # hack to center figure
+    with col_fig:
         st.altair_chart(finalfig, use_container_width=False)
 
     #%% show t test results
 
     my_expander = st.beta_expander("Click here to see t-test results")
     with my_expander:
-        st.markdown(
-            "The values in green will update as you change the slider values above."
-        )
         res_list = []
         res_list.append(res["dof"].round(0)[0])  # df
         res_list.append(res["T"].round(2)[0])
