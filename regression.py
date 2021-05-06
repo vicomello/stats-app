@@ -24,8 +24,17 @@ def main():
     #%% sliders
 
     range_ = [-10.0, 10.0]
-    intercept = st.slider('intercept', *range_)
-    beta = st.slider('beta',*range_)
+    beta_params = [
+        "Beta",  # label
+        -1,  # min
+        1,  # max
+        0.25,  # start value
+        0.01,  # step
+        "%f",  # format
+    ]
+
+    st.sidebar.slider('intercept', *range_)
+    st.sidebar.slider('beta',*beta_params)
 
     #%% defining linear regression based on slider input
     x = list(range(-10,11))
