@@ -6,6 +6,7 @@ import streamlit as st
 
 import home
 import regression
+import multiple_regression
 import ttest_independent
 import ttest_onesample
 import utils
@@ -23,9 +24,10 @@ st.set_page_config(
 # The page names and the page files
 PAGES = {
     # "Start here": home,
-    "One-sample t-test": ttest_onesample,
-    "Independent-samples t-test": ttest_independent,
-    "Regression": regression,
+    #"One-sample t-test": ttest_onesample,
+    #"Independent-samples t-test": ttest_independent,
+    "Simple Linear Regression": regression,
+    "Multiple Linear Regression": multiple_regression
 }
 
 # Displaying the selection box

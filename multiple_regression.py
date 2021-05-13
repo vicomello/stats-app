@@ -18,52 +18,52 @@ def main():
     #)
     #%% computations
     #range_ = [-10.00, 10.00, 0.00]
-    beta_params = [
+    beta_params_humans = [
         -1.00,  # min
         1.00,  # maX
         0.25,  #start
         0.01  #step
     ]
+    beta_params_martians = [
+        -1.00,  # min
+        1.00,  # maX
+        0.75,  #start
+        0.01  #step
+    ]
 
     intercept = 10.00
     st.sidebar.markdown("Intercept = 10.0")
-    beta_values = [-1.00, -0.5, -0.25, 0 , 0.25, 0.50, 1.00]
-    beta = st.sidebar.radio("beta", options=beta_values, index=5)
-
-    mean_center = st.sidebar.checkbox("Mean-center")
-    scale_data = st.sidebar.checkbox("Scale data")
+    beta_humans = st.sidebar.slider('Beta for Humans',*beta_params_humans)
+    beta_martians = st.sidebar.slider('Beta for Martians',*beta_params_martians)
 
     #%% defining linear regression
-    df = pd.DataFrame({"Age": list(range(1,60,1))})
-    df["i"] = np.arange(1, df.shape[0] + 1)
-    df["Predicted_Happiness"] = intercept + df["Age"]*beta
-    df["Residual"] = utils.rand_norm_fixed(59,0,3)
-    df["Happiness"] = intercept + df["Age"]*beta + df["Residual"]
-    df["Mean"] = np.mean(df["Happiness"])
-    df["Happiness_Centered"] = df["Happiness"] - df["Mean"]
-    df["Happiness_Scaled"] = df["Happiness"]/np.std(df["Happiness"])
-    df["Happiness_Centered_Scaled"] = (df["Happiness"] - df["Mean"])/np.std(df["Happiness"])
-    #how to generate a random value for each line?
     
-    if mean_center & scale_data:
-        Y = "Happiness_Centered_Scaled:Q"
-        y_values = 'Happiness_Centered_Scaled'
-    elif mean_center:
-        Y = "Happiness_Centered:Q"
-        y_values = 'Happiness_Centered'
-    elif scale_data:
-        Y = "Happiness_Scaled:Q"
-        y_values = 'Happiness_Scaled'
-    else:
-        Y = "Happiness:Q"
-        y_values = 'Happiness'
-    #%% title
-
-    st.title("Interpreting Simple Linear Regressions")
-    st.markdown(
-        "We use a linear regression model when we want to understand how the change in a variable Y influences on another variable X."
+    df1 = pd.DataFrame({
+            "Age": np.arange (1, 60, 1.00),
+            "Species": "Human",
+            "Residual": utils.rand_norm_fixed(59,0,3),
+            "Predicted_Happiness": beta_humans * np.arange (1, 60, 1.00)
+        }
     )
-    st.markdown("### How does age relate to happiness?")
+    df2 = pd.DataFrame({
+            "Age": np.arange (1, 60, 1.00),
+            "Species": "Martian",
+            "Residual": utils.rand_norm_fixed(59,0,3),
+            "Predicted_Happiness": beta_martians * np.arange (1, 60, 1.00)
+        }
+    )
+    df = pd.concat([df1, df2], axis=0).reset_index(drop=True)   
+    df["i"] = np.arange(1, df.shape[0] + 1)
+    df["Happiness"] = df["Predicted_Happiness"] + df["Residual"]
+    df["Grand_Mean"] = np.mean(df["Happiness"])
+    #how to generate a random value for each line?
+
+    #%% title
+    st.title("Multiple Linear regression")
+    st.markdown(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eget ligula eu lectus lobortis condimentum. Aliquam nonummy auctor massa. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla at risus. Quisque purus magna, auctor et, sagittis ac, posuere eu, lectus. Nam mattis, felis ut adipiscing."
+    )
+    st.markdown("### How does age relate to happiness for martians and humans?")
     st.write(
         "Lorem Ipsum dolor."
     )
@@ -86,8 +86,8 @@ def main():
     #     #st.altair_chart(finalfig, use_container_width=False)
     # #%% sliders
     
-    x_domain = [-10, 80]
-    y_domain = [-60, 70]
+    x_domain = [-5, 70]
+    y_domain = [-65, 65]
     #fig_height = 377
     
     fig1 = (
@@ -95,9 +95,28 @@ def main():
     .mark_circle(size=89)
     .encode(
     x=alt.X("Age:Q", scale=alt.Scale(domain=x_domain), axis=alt.Axis(grid=False)),
-    y=alt.Y(Y, scale=alt.Scale(domain=y_domain), axis=alt.Axis(grid=False))
+    y=alt.Y("Happiness:Q", scale=alt.Scale(domain=y_domain), axis=alt.Axis(grid=False)),
+    color="Species"
     )
     )
+
+    fig2 = fig1.transform_regression('Age', 'Happiness', groupby=['Species']).mark_line().interactive()
+    
+    # fig2 = (
+    #     alt.Chart(df1)
+    #     .mark_line(color="#51127c", size=3)
+    #     .encode(
+    #         x=alt.X(
+    #             "Age:Q"
+    #         ),
+    #         y=alt.Y(
+    #             "Happiness:Q"
+    #         ),
+    #     )
+    #     .interactive()
+    #     .properties(height=377)
+    # )
+
     
     # fig1 = (
     #     alt.Chart(df)
@@ -117,35 +136,35 @@ def main():
     #     )
     # )
 
-    fig2 = fig1.transform_regression('Age', y_values).mark_line()
+    #fig2 = fig1.transform_regression('Age', 'Happiness').mark_line()
     
     #%% Horizontal line
 
-    fig3 = (
-        alt.Chart(pd.DataFrame({"Y": [0]}))
-        .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
-        .encode(y=alt.Y("Y:Q", axis=alt.Axis(title="")))
-        .properties(height=377)
-    )
+    # fig3 = (
+    #     alt.Chart(pd.DataFrame({"Y": [0]}))
+    #     .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
+    #     .encode(y=alt.Y("Y:Q", axis=alt.Axis(title="")))
+    #     .properties(height=377)
+    # )
 
     #%% Vertical Line
 
-    fig4 = (
-        alt.Chart(pd.DataFrame({"x": [0]}))
-        .mark_rule(size=0.7, color="#51127c",opacity=0.5, strokeDash=[3, 3])
-        .encode(
-            x=alt.X("x:Q", axis=alt.Axis(title=""))
-            )
-            .interactive()
-        # .properties(height=fig_height)
-    )
+    # fig4 = (
+    #     alt.Chart(pd.DataFrame({"x": [0]}))
+    #     .mark_rule(size=0.7, color="#51127c",opacity=0.5, strokeDash=[3, 3])
+    #     .encode(
+    #         x=alt.X("x:Q", axis=alt.Axis(title=""))
+    #         )
+    #         .interactive()
+    #     # .properties(height=fig_height)
+    # )
  
     
     #%% Drawing plot 
 
     #fig2 = fig1.transform_regression('Age', y_values).mark_line()
 
-    finalfig =  fig1 + fig2 + fig3 + fig4 
+    finalfig =  fig1 + fig2
     #finalfig = fig1 + fig3 + fig4
     st.altair_chart(finalfig, use_container_width=True)
     
@@ -156,14 +175,14 @@ def main():
         st.write(lm)
         
     #%% Writing GLM
-    st.markdown("##### ")
-    eq1 = "Y_i = b_0 + b_1 X_1 + \epsilon_i"
-    st.latex(eq1)
-    eq2 = (
-        eq1.replace("b_0", str(intercept))
-        .replace("b_1", str(beta))
-    )
-    st.latex(eq2)
+    # st.markdown("##### ")
+    # eq1 = "Y_i = b_0 + b_1 X_1 + \epsilon_i"
+    # st.latex(eq1)
+    # eq2 = (
+    #     eq1.replace("b_0", str(intercept))
+    #     .replace("b_1", str(beta))
+    # )
+    # st.latex(eq2)
 
     st.markdown(
         "where $X_i$ are the data points ($X_1, X_2, ... X_{n-1}, X_n$), $b_0$ is the intercept (the value at which the line crosses the $$Y$$-axis), $b_1$ is the change in Y when you change one unit in X, and $\epsilon_i$ is the residual associated with data point $Y_i$."

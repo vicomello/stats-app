@@ -97,6 +97,7 @@ def main():
     )
 
     fig2 = (
+        
         alt.Chart(hline_b0)
         .mark_rule(size=3, color="#51127c")
         .encode(
@@ -288,3 +289,5 @@ def main():
 
         st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
         st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
+
+# %%
