@@ -127,9 +127,9 @@ def main():
 
     center_code = st.sidebar.checkbox("Mean-center predictor")
     if center_code:
-        x_coding = "Predictor_code_centered"
+        x_coding = "Species_code_centered"
     else:
-        x_coding = "Predictor_code"
+        x_coding = "Species_code"
 
     #%% simulate data
 
@@ -137,7 +137,7 @@ def main():
         {
             "Happiness": utils.rand_norm_fixed(n, mean, sd),
             "Species": "Human",
-            "Predictor_code": code1,
+            "Species_code": code1,
             "Group_mean": mean,
         }
     )
@@ -145,49 +145,48 @@ def main():
         {
             "Happiness": utils.rand_norm_fixed(n2, mean2, sd2),
             "Species": "Martian",
-            "Predictor_code": code2,
+            "Species_code": code2,
             "Group_mean": mean2,
         }
     )
     df_all = pd.concat([df1, df2], axis=0).reset_index(drop=True)
     df_all["i"] = np.arange(1, df_all.shape[0] + 1)
     df_all["Happiness"] = df_all["Happiness"].round(2)
-    df_all["Mean"] = df_all["Happiness"].mean().round(2)
-    df_all["Predictor_code_centered"] = (
-        df_all["Predictor_code"] - df_all["Predictor_code"].mean()
+    df_all["Mean"] = np.round((mean + mean2) / 2, 2)
+    df_all["Species_code_centered"] = (
+        df_all["Species_code"] - df_all["Species_code"].mean()
     )
-    df_all["Residual"] = df_all["Happiness"] - df_all["Mean"]
-    df_all["Residual"] = df_all["Residual"].round(2)
-
-    # TODO fix this section
-    # create tooltip for plot (Model: ...)
-    for i in df_all.itertuples():
-        df_all.loc[
-            i.Index, "Model"
-        ] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
     # group mean
-
     df_mean = (
         df_all.groupby("Species")
         .mean()
         .reset_index()[
-            ["Species", "Happiness", "Predictor_code", "Predictor_code_centered"]
+            ["Species", "Happiness", "Species_code", "Species_code_centered"]
         ]
         .round(2)
     )
 
     #%% ttest and linear regression
 
-    X = df_all[["Predictor_code"]]
+    X = df_all[["Species_code"]]
     if center_code:
-        X = df_all[["Predictor_code_centered"]]
+        X = df_all[["Species_code_centered"]]
 
     y = df_all["Happiness"]
     df_results = pg.linear_regression(X, y, add_intercept=True)
-    b0 = df_results.at[0, "coef"].round(2)
-    b1 = df_results.at[1, "coef"].round(2)
-    model = f"y = {b0:.2f} + {b1:.2f}x1 + e"
+    b0, b1 = df_results["coef"].round(2)
+    df_all["b0"] = b0
+    df_all["b1"] = b1
+    df_all["Happiness_predicted"] = b0 + b1 * X
+    df_all = df_all.eval("Residual = Happiness - Happiness_predicted")
+
+    # create tooltip for plot (Model: ...)
+    for i in df_all.itertuples():
+        df_all.loc[
+            i.Index, "Model"
+        ] = f"{i.Happiness:.2f} = {b0} + ({b1} * {i.Species_code:.2f}) + {i.Residual:.2f}"
+        df_all
 
     # %% plot
 
@@ -195,7 +194,7 @@ def main():
     y_domain = [-30, 30]
     fig_height = 377
 
-    fig1 = (
+    fig_main = (
         alt.Chart(df_all)
         .mark_circle(size=(89 / np.sqrt(n)) * 2, opacity=0.5)
         .encode(
@@ -210,7 +209,17 @@ def main():
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
             color=alt.Color("Species", scale=alt.Scale(scheme="viridis")),
-            tooltip=["i", "Happiness", "Mean", "Group_mean"],
+            tooltip=[
+                "i",
+                "Group_mean",
+                "Happiness",
+                "Happiness_predicted",
+                "Species",
+                "Species_code",
+                "Model",
+                "b0",
+                "b1",
+            ],
         )
         .interactive()
         .properties(height=377)
@@ -218,14 +227,14 @@ def main():
 
     #%% x and y axes lines
 
-    fig4 = (
+    fig_horizontal = (
         alt.Chart(pd.DataFrame({"y": [0]}))
         .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
         .encode(y=alt.Y("y:Q", axis=alt.Axis(title="")))
         .properties(height=fig_height)
     )
 
-    fig5 = (
+    fig_vertical = (
         alt.Chart(pd.DataFrame({"x": [0]}))
         .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
         .encode(x=alt.X("x:Q", axis=alt.Axis(title="")))
@@ -312,7 +321,7 @@ def main():
 
     # %% combine figurs
 
-    finalfig = (fig1 + fig2 + fig3 + fig4 + fig5) | fig_violin
+    finalfig = (fig_main + fig2 + fig3 + fig_horizontal + fig_vertical) | fig_violin
     finalfig.configure_axis(grid=False)
     finalfig.configure_view(stroke=None)
 
@@ -323,20 +332,20 @@ def main():
     )
     st.markdown("### Who's happier—humans or Martians?")
     st.markdown(
-        "Humans and Martians disagree on who is happier, so each species gathered a bunch of their own members and recorded their happiness for a day. Scores > 0 means above-average happiness; scores < 0 means below-average happiness. Their happiness scores are shown below."
+        f"Humans and Martians disagree on who is happier, so each species gathered a bunch of their own members ({n} humans, {n2} Martians) and recorded their happiness for a day (see figure below). Scores greater or less than 0 means above- and below-average happiness, respectively."
     )
 
-    expander_df = st.beta_expander("Click here to see simulated data")
+    expander_df = st.beta_expander("Click here to show/hide simulated data")
     with expander_df:
         st.markdown(
-            "Your scores for each day (`i`) are in the `Happiness` column (25 values/rows, one for each day, `i`). The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
+            f"Scores for each member (`i`) are in the `Happiness` column. The mean (average) of the scores are in the `Mean` column. `Residual` is `Happiness` minus `Mean` for each value/row."
         )
         # format dataframe output
         fmt = {
             "i": "{:.0f}",
             "Happiness": "{:.1f}",
-            "Predictor_code": "{:.2f}",
-            "Predictor_code_centered": "{:.2f}",
+            "Species_code": "{:.2f}",
+            "Species_code_centered": "{:.2f}",
             "Mean": "{:.1f}",
             "Residual": "{:.1f}",
         }
@@ -345,12 +354,12 @@ def main():
             "Species",
             "Happiness",
             "Mean",
-            "Predictor_code",
-            "Predictor_code_centered",
+            "Species_code",
+            "Species_code_centered",
             "Residual",
         ]  # cols to show
         if not center_code:
-            dfcols.remove("Predictor_code_centered")
+            dfcols.remove("Species_code_centered")
         st.dataframe(df_all[dfcols].style.format(fmt), height=233)
 
     # show figure
@@ -375,7 +384,7 @@ def main():
 
     #%% show t test results
 
-    expander_ttest = st.beta_expander("Click here to see t-test results")
+    expander_ttest = st.beta_expander("Click here to show/hide t-test results")
     with expander_ttest:
         # st.markdown(
         #     "The values in green will update as you change the slider values above."
