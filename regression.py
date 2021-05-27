@@ -1,5 +1,6 @@
 #%%
 
+from numpy.lib.shape_base import _replace_zero_by_x_arrays
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -11,13 +12,7 @@ import utils
 
 #%% config
 def main():
-    #st.set_page_config(
-    #    page_title="Regression",
-    #    laXout="wide",
-    #    initial_sidebar_state="auto",
-    #)
-    #%% computations
-    #range_ = [-10.00, 10.00, 0.00]
+
     beta_params = [
         -1.00,  # min
         1.00,  # maX
@@ -27,11 +22,11 @@ def main():
 
     intercept = 10.00
     st.sidebar.markdown("Intercept = 10.0")
-    beta_values = [-1.00, -0.5, -0.25, 0 , 0.25, 0.50, 1.00]
-    beta = st.sidebar.radio("beta", options=beta_values, index=5)
+    beta_values = [-1.00, -0.5, 0 , 0.50, 1.00]
+    beta = st.sidebar.radio("beta", options=beta_values, index=3)
 
-    mean_center = st.sidebar.checkbox("Mean-center")
-    scale_data = st.sidebar.checkbox("Scale data")
+    mean_center_predictor = st.sidebar.checkbox("Mean-center")
+    scale_predictor = st.sidebar.checkbox("Scale data")
 
     #%% defining linear regression
     df = pd.DataFrame({"Age": list(range(1,60,1))})
@@ -39,24 +34,29 @@ def main():
     df["Predicted_Happiness"] = intercept + df["Age"]*beta
     df["Residual"] = utils.rand_norm_fixed(59,0,3)
     df["Happiness"] = intercept + df["Age"]*beta + df["Residual"]
-    df["Mean"] = np.mean(df["Happiness"])
-    df["Happiness_Centered"] = df["Happiness"] - df["Mean"]
-    df["Happiness_Scaled"] = df["Happiness"]/np.std(df["Happiness"])
-    df["Happiness_Centered_Scaled"] = (df["Happiness"] - df["Mean"])/np.std(df["Happiness"])
+    df["Mean Happiness"] = np.mean(df["Happiness"]) # should be changing age, not happiness (age_mean)
+    df["Mean Age"] = np.mean(df["Age"])
+    df["Age Centered"] = df["Age"] - df["Mean Age"]
+    df["Age_Scaled"] = df["Age"]/np.std(df["Age"])
+    df["Age_Centered_Scaled"] = (df["Age"] - df["Mean Age"])/np.std(df["Age"])
     #how to generate a random value for each line?
     
-    if mean_center & scale_data:
-        Y = "Happiness_Centered_Scaled:Q"
-        y_values = 'Happiness_Centered_Scaled'
-    elif mean_center:
-        Y = "Happiness_Centered:Q"
-        y_values = 'Happiness_Centered'
-    elif scale_data:
-        Y = "Happiness_Scaled:Q"
-        y_values = 'Happiness_Scaled'
+    if mean_center_predictor & scale_predictor:
+        X = "Age_Centered_Scaled:Q"
+        x_values = 'Age_Centered_Scaled'
+        y_intercept = intercept + beta*(np.mean(df["Age"])/np.std(df["Age"]))
+    elif mean_center_predictor:
+        X = "Age Centered:Q"
+        x_values = 'Age Centered'
+        y_intercept = intercept + (beta*np.mean(df["Age"]))
+    elif scale_predictor:
+        X = "Age_Scaled:Q"
+        x_values = 'Age_Scaled'
+        y_intercept = intercept + (beta*np.std(df["Age"]))
     else:
-        Y = "Happiness:Q"
-        y_values = 'Happiness'
+        X = "Age:Q"
+        x_values = 'Age'
+        y_intercept = intercept
     #%% title
 
     st.title("Interpreting Simple Linear Regressions")
@@ -79,45 +79,21 @@ def main():
         }
         dfcols = ["Age","Happiness", "Predicted_Happiness", "Residual"]  # cols to show
         st.dataframe(df[dfcols].style.format(fmt), height=233)
-
-    # _, col_fig, _ = st.beta_columns([0.1, 0.5, 0.1])  # hack to center figure
-    # with col_fig:
-    #     st.write("hi!")
-    #     #st.altair_chart(finalfig, use_container_width=False)
-    # #%% sliders
     
-    x_domain = [-10, 80]
-    y_domain = [-60, 70]
+    x_domain = [-80, 80]
+    y_domain = [-60, 80]
     #fig_height = 377
     
     fig1 = (
     alt.Chart(df)
     .mark_circle(size=89)
     .encode(
-    x=alt.X("Age:Q", scale=alt.Scale(domain=x_domain), axis=alt.Axis(grid=False)),
-    y=alt.Y(Y, scale=alt.Scale(domain=y_domain), axis=alt.Axis(grid=False))
+    x=alt.X(X, scale=alt.Scale(domain=x_domain), axis=alt.Axis(grid=False)),
+    y=alt.Y("Happiness:Q", scale=alt.Scale(domain=y_domain), axis=alt.Axis(grid=False))
     )
     )
     
-    # fig1 = (
-    #     alt.Chart(df)
-    #     .mark_circle(size=89)
-    #     .encode(
-    #         X=alt.X(
-    #             "Age:Q",
-    #             scale=alt.Scale(domain=X_domain),
-    #             axis=alt.Axis(grid=False)
-                
-    #         #aXis=alt.AXis(grid=False)
-    #         ),
-    #         Y=alt.Y(Y,
-    #             scale=alt.Scale(domain=Y_domain),
-    #             axis=alt.Axis(grid=False)
-    #         )
-    #     )
-    # )
-
-    fig2 = fig1.transform_regression('Age', y_values).mark_line()
+    fig2 = fig1.transform_regression(x_values, 'Happiness', extent=[-80, 80]).mark_line()
     
     #%% Horizontal line
 
@@ -139,18 +115,28 @@ def main():
             .interactive()
         # .properties(height=fig_height)
     )
- 
+
+    #Yi=10.0+1.0X1+ϵi
     
+    df_intercept = pd.DataFrame({"x":[0], "y":[y_intercept]})
+
+    fig5 = (
+        alt.Chart(df_intercept)
+        .mark_point(size=60, color="#FF0000")
+        .encode(
+            x="x:Q",
+            y="y:Q"
+        )
+    )	
+
     #%% Drawing plot 
 
-    #fig2 = fig1.transform_regression('Age', y_values).mark_line()
-
-    finalfig =  fig1 + fig2 + fig3 + fig4 
+    finalfig =  fig1 + fig2 + fig3 + fig4 + fig5
     #finalfig = fig1 + fig3 + fig4
     st.altair_chart(finalfig, use_container_width=True)
     
-    
     lm = pg.linear_regression(df["Age"], df["Happiness"], add_intercept=True)
+
     my_expander = st.beta_expander("Click here to see regression results")
     with my_expander:
         st.write(lm)
@@ -187,24 +173,4 @@ def main():
         st.markdown("####")
 
         st.markdown("R: `lm(Y ~ X)`  # linear model with one predictor")
-
-    #%% defining linear regression based on slider input
-    # Y = list(range(-10,11))
-
-    # Xlist=list()
-    # if intercept != -11:
-    #     for i in X:    
-    #         Y = intercept + beta*float(i)
-    #         Xlist.append(X)
-    # d = {'X': X, 'X': Xlist}
-    # chart_data = pd.DataFrame(data=d)
-
-    #%% creating graph
-
-    # c = alt.Chart(chart_data).mark_line().encode(
-    #     X='X',
-    #     X=alt.X('X', scale=alt.Scale(domain=(-100,100)))
-    # )
-
-    # st.altair_chart(c, use_container_width=True)
 # %%
