@@ -1,10 +1,8 @@
 #%%
 
-from numpy.lib.shape_base import _replace_zero_by_x_arrays
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import altair as alt
 import pingouin as pg
 
@@ -26,8 +24,7 @@ def main():
     # TODO scale outcome/response
 
     #%% defining linear regression
-    df = pd.DataFrame({"Age": list(range(30, 60))})
-    df = pd.DataFrame({"Age": [10, 10, 10, 40, 40, 40]})
+    df = pd.DataFrame({"Age": list(range(40, 60))})
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Predicted_Happiness"] = df["Age"] * b1  # FIXME think about how to do this
     df["Residual"] = utils.rand_norm_fixed(df.shape[0], 0, 3)

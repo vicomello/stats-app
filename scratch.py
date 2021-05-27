@@ -167,3 +167,54 @@ fig_violin = (
 b0 = 3
 b1 = 5
 pd.DataFrame({"b0": [b0], "b1": [b1], "Model": f"y = {b0} + {b1} * x"})
+
+b0
+df["happiness"] = utils.rand_norm_fixed(n=df.shape[0], mean=b0 + df["Age"] * b1, sd=5)
+pg.linear_regression(df[["Age"]], df["happiness"])
+
+
+b0, b1 = 17.5, 0.87
+errors1 = utils.rand_norm_fixed(n=int(df.shape[0] / 2), mean=0, sd=5)
+errors2 = [-i for i in errors1]
+eps = np.concatenate([errors1, errors2])
+eps.mean()
+eps.std()
+df["happiness"] = b0 + df["Age"] * b1 + eps
+pg.linear_regression(df[["Age"]], df["happiness"])
+
+
+n = 9
+n // 2
+df[["Age", "i"]] @ np.array([17.5, 0.87])
+
+df.apply(lambda x: len(x.unique()))
+df["abc"] = "abc"
+df["aaa"] = 1.0
+df["aba"] = 1
+
+
+def simulate_regression(X, b, residual_mean=0, residual_sd=10, add_intercept=True):
+    if X.shape[0] % 2 != 0:
+        add0 = True
+    else:
+        add0 = False
+    n = X.shape[0] // 2
+    X.loc[:, "Intercept"] = 1
+    errors1 = utils.rand_norm_fixed(n=n, mean=0, sd=residual_sd)
+    errors2 = [-i for i in errors1]  # flip errors
+    if add0:
+        errors2.append(0)
+    errors = np.concatenate([errors1, errors2])
+    y = X @ b + errors
+    print(
+        f"Simulated b: {pg.linear_regression(X, y, add_intercept=False, coef_only=True)}"
+    )
+
+    X = X.drop(columns="Intercept")
+    X.loc[:, "y"] = y
+    return X
+
+
+simulate_regression(df[["Age"]], np.array([17.4, 3.2]))
+
+# %%
