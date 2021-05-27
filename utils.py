@@ -40,11 +40,11 @@ def authors():
 
 
 def simulate_y(X, b, residual_mean=0, residual_sd=10):
-    """Simulate pseudo-random regression data with fixed regression coefficients
+    """Simulate pseudo-random regression data with fixed regression coefficients.
 
     Args:
-        X (pandas.DataFrame): pandas.DataFrame with predictors/features
-        b (numpy.array): regression coefficients (e.g., np.array([b0, b1, b2, b3]))
+        X (pandas.DataFrame): pandas.DataFrame with predictors/features as columns.
+        b (numpy.array): regression coefficients (e.g., np.array([b0, b1, b2, b3])).
         residual_mean (int, optional): Residual mean. Defaults to 0.
         residual_sd (int, optional): Residual standard deviation. Defaults to 10.
 
