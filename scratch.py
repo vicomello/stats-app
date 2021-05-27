@@ -160,3 +160,10 @@ fig_violin = (
     )
     .properties(width=100)
 )
+
+
+# %%
+
+b0 = 3
+b1 = 5
+pd.DataFrame({"b0": [b0], "b1": [b1], "Model": f"y = {b0} + {b1} * x"})
