@@ -385,6 +385,7 @@ def main():
     #%% show t test results
 
     expander_ttest = st.beta_expander("Click here to show/hide t-test results")
+    # TODO tell people t-test is dummy
     with expander_ttest:
         # st.markdown(
         #     "The values in green will update as you change the slider values above."
