@@ -40,7 +40,7 @@ def authors():
 
 
 def simulate_y(X, b, residual_mean=0, residual_sd=10):
-    """Simulate pseudo-random regression data with fixed regression coefficients.
+    """Simulate pseudo-random regression response/outcome values with fixed regression coefficients.
 
     Args:
         X (pandas.DataFrame): pandas.DataFrame with predictors/features as columns.
@@ -49,7 +49,7 @@ def simulate_y(X, b, residual_mean=0, residual_sd=10):
         residual_sd (int, optional): Residual standard deviation. Defaults to 10.
 
     Returns:
-        pandas.DataFrame: pandas.DataFrame with predictors/features and y (simulated outcome/response variable)
+        numpy.array: simulated outcome/response values, given X and b
     """
     add0 = X.shape[0] % 2 != 0
     n = X.shape[0] // 2
@@ -60,10 +60,11 @@ def simulate_y(X, b, residual_mean=0, residual_sd=10):
     if add0:
         errors2.append(0)
     errors = np.concatenate([errors1, errors2])
+    np.random.shuffle(errors)
     y = X @ b + errors
+    print(f"Requested b: {b}")
     print(
         f"Simulated b: {pg.linear_regression(X, y, add_intercept=False, coef_only=True)}"
     )
-    X.drop(columns="Intercept", inplace=True)
-    X.loc[:, "y"] = y
-    return X
+    print("Simulated outcome/response values:")
+    return y.to_numpy()
