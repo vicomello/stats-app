@@ -211,17 +211,14 @@ def main():
     my_expander = st.beta_expander("Click to show/hide Python and R code")
     with my_expander:
         st.markdown(
-            "Python: `pingouin.linear_regression(X, Y)`  # linear regression where X is the predictor and Y the observed variable"
+            "`X` is the predictor/design matrix and `y` is the outcome/response variable"
         )
+        st.markdown("Python: `pingouin.linear_regression(X, y)`")
+        st.markdown("Python: `scipy.stats.linregress(X, y)`")
         st.markdown(
-            "Python: `scipy.stats.linregress (X, Y)`  # linear regression where X  is the predictor and Y the observed variable"
+            'Python: `statsmodels.formula.api.ols(formula="y ~ X", data=dataframe).fit()`'
         )
-        st.markdown(
-            'PYthon: `statsmodels.formula.api.ols(formula="Y ~ X", data=dataframe).fit()`  # linear model with one predictor'
-        )
-        st.markdown("####")
-
-        st.markdown("R: `lm(Y ~ X)`  # linear model with one predictor")
+        st.markdown("R: `lm(y ~ X)`")
 
 
 # %%
