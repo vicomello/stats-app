@@ -77,12 +77,14 @@ def simulate_y(X, b, residual_sd=10):
 
 
 def simulate_x(n, min_max):
-    """Simulate n pseudo-random x values for regression.
+    """Simulate n pseudo-random x values (mostly for simulating regression).
 
     Args:
+        n (int): Number of data points.
+        min_max (list): Range of data points ([min, max]).
 
     Returns:
-
+        numpy.array: array of pseudo-randomly generated data points with range min_max.
     """
     addval = n % 2
     n = n // 2
