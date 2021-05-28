@@ -97,7 +97,6 @@ def main():
     )
 
     fig2 = (
-        
         alt.Chart(hline_b0)
         .mark_rule(size=3, color="#51127c")
         .encode(
@@ -180,7 +179,7 @@ def main():
 
     #%% show figure
 
-    _, col_fig, _ = st.beta_columns([0.1, 0.5, 0.1])  # hack to center figure
+    _, col_fig, _ = st.beta_columns([0.15, 0.5, 0.1])  # hack to center figure
     with col_fig:
         st.altair_chart(finalfig, use_container_width=False)
 
@@ -289,5 +288,6 @@ def main():
 
         st.markdown("R: `t.test(y, mu = 0)`  # t-test against 0")
         st.markdown("R: `lm(y ~ 1)`  # linear model with only intercept term")
+
 
 # %%

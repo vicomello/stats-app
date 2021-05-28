@@ -57,47 +57,37 @@ def main():
     noise = st.sidebar.slider(*slider_noise_params)
     slider_noise_params[3] = noise
 
-    mean_center_predictor = st.sidebar.checkbox("Mean-center")
-    scale_predictor = st.sidebar.checkbox("Z-score predictor (Age)")
+    # TODO radio butons instead of separate checkbox (either mean center OR zscore—can't check both at the same time!)
+    mean_center_predictor = st.sidebar.checkbox("Mean-center predictor (Age)")
+    zscore_predictor = st.sidebar.checkbox("Z-score predictor (Age)")
 
     # TODO scale outcome/response
 
     #%% defining linear regression
-    df = pd.DataFrame({"Age": utils.simulate_x(n, [5, 50])})
+    df = pd.DataFrame({"Age": utils.simulate_x(n, [5, 70])})
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Happiness"] = utils.simulate_y(
         df[["Age"]], np.array([b0, b1]), residual_sd=noise
     )
-    df["Mean Happiness"] = df["Happiness"].mean()
-    df["Mean Age"] = df["Age"].mean()
-    df["Age Centered"] = df["Age"] - df["Mean Age"]
-    df["Age_Scaled"] = df["Age"] / df["Age"].std()
-    # z-score
-    df["Age_Centered_Scaled"] = (df["Age"] - df["Mean Age"]) / df["Age"].std()
+    df["Mean_Happiness"] = df["Happiness"].mean()
+    df["Mean_Age"] = df["Age"].mean()
+    df["Age_Centered"] = df["Age"] - df["Age"].mean()
+    df["Age_zscore"] = (df["Age"] - df["Mean_Age"]) / df["Age"].std()
 
-    lm = pg.linear_regression(df["Age"], df["Happiness"], add_intercept=True)
+    X = "Age:Q"
+    if mean_center_predictor:
+        X = "Age_Centered:Q"
+        x_label = "Age (mean-centered)"  # for plotting label
+    if zscore_predictor:
+        X = "Age_zscore:Q"
+        x_label = "Age (z-score)"
+    x_col = X.replace(":Q", "")
+
+    lm = pg.linear_regression(df[[x_col]], df["Happiness"], add_intercept=True)
     b0, b1 = lm["coef"].round(2)
 
     df["Predicted_Happiness"] = b0 + b1 * df["Age"]
     df["Residual"] = df["Happiness"] - df["Predicted_Happiness"]
-
-    # TODO z-score vs mean-center
-    if mean_center_predictor and scale_predictor:
-        X = "Age_Centered_Scaled:Q"
-        x_values = "Age_Centered_Scaled"
-        y_intercept = b0 + b1 * df["Age"].mean() / df["Age"].std()
-    elif mean_center_predictor:
-        X = "Age Centered:Q"
-        x_values = "Age Centered"
-        y_intercept = b0 + b1 * df["Age"].mean()
-    elif scale_predictor:
-        X = "Age_Scaled:Q"
-        x_values = "Age_Scaled"
-        y_intercept = b0 + b1 * df["Age"].mean()
-    else:
-        X = "Age:Q"
-        x_values = "Age"
-        y_intercept = b0
 
     # TODO pingouin correlation
 
@@ -114,7 +104,7 @@ def main():
     with expander_df:
         # format dataframe output
         fmt = {
-            "Age": "{:.2f}",
+            "Age": "{:.2f}",  # TODO also show Agecenterd, agezscore
             "Happiness": "{:.2f}",
             "Predicted_Happiness": "{:.2f}",
             "Residual": "{:.2f}",
@@ -122,14 +112,15 @@ def main():
         dfcols = ["Age", "Happiness", "Predicted_Happiness", "Residual"]  # cols to show
         st.dataframe(df[dfcols].style.format(fmt), height=233)
 
-    x_domain = [-80, 80]
-    y_domain = [-60, 80]
-    # fig_height = 377
+    x_domain = [-100, 100]
+    if zscore_predictor:
+        x_domain = [i / 20 for i in x_domain]
+    y_domain = [-100, 100]
 
-    # TODO make it interactive
+    # TODO make it interactive; change color scheme; add x/y labels
     fig_main = (
         alt.Chart(df)
-        .mark_circle(size=89)
+        .mark_circle(size=55)
         .encode(
             x=alt.X(X, scale=alt.Scale(domain=x_domain), axis=alt.Axis(grid=False)),
             y=alt.Y(
@@ -137,16 +128,21 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False),
             ),
+            tooltip=["Age", "Happiness"],
         )
+        .properties(height=377, width=377)
     )
+    fig_main.interactive()  # https://github.com/altair-viz/altair/issues/2159
 
-    fig2 = fig_main.transform_regression(
-        x_values, "Happiness", extent=[-80, 80]
+    # TODO make line interactive (show model)
+    fig_regline = fig_main.transform_regression(
+        x_col, "Happiness", extent=[-300, 300]
     ).mark_line()
+    fig_regline.interactive()
 
     #%% Horizontal line
 
-    fig3 = (
+    fig_horizontal = (
         alt.Chart(pd.DataFrame({"Y": [0]}))
         .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
         .encode(y=alt.Y("Y:Q", axis=alt.Axis(title="")))
@@ -155,7 +151,7 @@ def main():
 
     #%% Vertical Line
 
-    fig4 = (
+    fig_vertical = (
         alt.Chart(pd.DataFrame({"x": [0]}))
         .mark_rule(size=0.7, color="#51127c", opacity=0.5, strokeDash=[3, 3])
         .encode(x=alt.X("x:Q", axis=alt.Axis(title="")))
@@ -163,21 +159,21 @@ def main():
         # .properties(height=fig_height)
     )
 
-    # Yi=10.0+1.0X1+ϵi
-
-    df_intercept = pd.DataFrame({"x": [0], "y": [y_intercept]})
-
-    fig5 = (
+    # TODO make dot interactive
+    df_intercept = pd.DataFrame({"x": [0], "y": [b0], "b0 (intercept)": [b0]})
+    fig_b0dot = (
         alt.Chart(df_intercept)
-        .mark_point(size=60, color="#FF0000")
-        .encode(x="x:Q", y="y:Q")
+        .mark_point(size=89, fill="#57106e", color="#57106e")
+        .encode(x="x:Q", y="y:Q", tooltip=["b0 (intercept)"])
+        .interactive()
     )
 
     #%% Drawing plot
 
-    finalfig = fig_main + fig2 + fig3 + fig4 + fig5
-    # finalfig = fig1 + fig3 + fig4
-    st.altair_chart(finalfig, use_container_width=True)
+    finalfig = fig_main + fig_regline + fig_horizontal + fig_vertical + fig_b0dot
+    _, col_fig, _ = st.beta_columns([0.15, 0.5, 0.1])  # hack to center figure
+    with col_fig:
+        st.altair_chart(finalfig, use_container_width=False)
 
     my_expander = st.beta_expander("Click here to show/hide regression results")
     with my_expander:
