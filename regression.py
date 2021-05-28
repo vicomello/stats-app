@@ -11,12 +11,51 @@ import utils
 #%% config
 def main():
 
-    beta_params = [-1.00, 1.00, 0.25, 0.01]  # min  # maX  # start  # step
+    slider_n_params = [
+        "Sample size (no. of data points)",  # label
+        2,  # min
+        100,  # max
+        16,  # start value
+        2,  # step
+        "%f",  # format
+    ]
 
-    b0 = 10.0
-    st.sidebar.markdown("Intercept = 10.0")
-    beta_values = [-1.00, -0.5, 0, 0.50, 1.00]
-    b1 = st.sidebar.radio("beta", options=beta_values, index=3)  # TODO change to slider
+    slider_b0_params = [
+        "b0 (intercept)",  # label
+        -30.0,  # min
+        30.0,  # max
+        5.0,  # start value
+        0.1,  # step
+        "%f",  # format
+    ]
+    slider_b1_params = [
+        "b1 (slope)",
+        -1.5,
+        1.5,
+        1.0,
+        0.1,
+        "%f",  # format
+    ]
+    slider_noise_params = [
+        "Noise (standard deviation)",
+        0.0,
+        15.0,
+        7.5,
+        0.1,
+        "%f",  # format
+    ]
+
+    n = st.sidebar.slider(*slider_n_params)
+    slider_n_params[3] = n
+
+    b0 = st.sidebar.slider(*slider_b0_params)
+    slider_b0_params[3] = b0
+
+    b1 = st.sidebar.slider(*slider_b1_params)
+    slider_b1_params[3] = b1
+
+    noise = st.sidebar.slider(*slider_noise_params)
+    slider_noise_params[3] = noise
 
     mean_center_predictor = st.sidebar.checkbox("Mean-center")
     scale_predictor = st.sidebar.checkbox("Z-score predictor (Age)")
@@ -24,51 +63,47 @@ def main():
     # TODO scale outcome/response
 
     #%% defining linear regression
-    df = pd.DataFrame({"Age": list(range(40, 60))})
+    df = pd.DataFrame({"Age": utils.simulate_x(n, [5, 50])})
     df["i"] = np.arange(1, df.shape[0] + 1)
-    df["Predicted_Happiness"] = df["Age"] * b1  # FIXME think about how to do this
-    df["Residual"] = utils.rand_norm_fixed(df.shape[0], 0, 3)
-    df["Happiness"] = b0 + df["Age"] * b1
-    df["Mean Happiness"] = np.mean(
-        df["Happiness"]
-    )  # should be changing age, not happiness (age_mean)
+    df["Happiness"] = utils.simulate_y(
+        df[["Age"]], np.array([b0, b1]), residual_sd=noise
+    )
+    df["Mean Happiness"] = df["Happiness"].mean()
     df["Mean Age"] = df["Age"].mean()
     df["Age Centered"] = df["Age"] - df["Mean Age"]
-    df["Age_Scaled"] = df["Age"] / np.std(df["Age"])
+    df["Age_Scaled"] = df["Age"] / df["Age"].std()
     # z-score
     df["Age_Centered_Scaled"] = (df["Age"] - df["Mean Age"]) / df["Age"].std()
-    # how to generate a random value for each line?
 
-    # TODO test this
-    # utils.rand_norm_fixed(n=df.shape[0], mean=b0 + df["Age"] * b1, sd=3)
+    lm = pg.linear_regression(df["Age"], df["Happiness"], add_intercept=True)
+    b0, b1 = lm["coef"].round(2)
+
+    df["Predicted_Happiness"] = b0 + b1 * df["Age"]
+    df["Residual"] = df["Happiness"] - df["Predicted_Happiness"]
 
     # TODO z-score vs mean-center
     if mean_center_predictor and scale_predictor:
         X = "Age_Centered_Scaled:Q"
         x_values = "Age_Centered_Scaled"
-        y_intercept = b0 + b1 * (np.mean(df["Age"]) / np.std(df["Age"]))
+        y_intercept = b0 + b1 * df["Age"].mean() / df["Age"].std()
     elif mean_center_predictor:
         X = "Age Centered:Q"
         x_values = "Age Centered"
-        y_intercept = b0 + (b1 * np.mean(df["Age"]))
+        y_intercept = b0 + b1 * df["Age"].mean()
     elif scale_predictor:
         X = "Age_Scaled:Q"
         x_values = "Age_Scaled"
-        y_intercept = b0 + (b1 * np.std(df["Age"]))
+        y_intercept = b0 + b1 * df["Age"].mean()
     else:
         X = "Age:Q"
         x_values = "Age"
         y_intercept = b0
 
-    lm = pg.linear_regression(df["Age"], df["Happiness"], add_intercept=True)
-    b0, b1 = lm["coef"]
-    # TODO get b0 b1 (see tttest)
-
     # TODO pingouin correlation
 
     #%% title
 
-    st.title("Interpreting Simple Linear Regressions")
+    st.title("Simple linear regression")
     st.markdown(
         "We use a linear regression model when we want to understand how the change in a variable Y influences on another variable X."
     )
@@ -91,7 +126,8 @@ def main():
     y_domain = [-60, 80]
     # fig_height = 377
 
-    fig1 = (
+    # TODO make it interactive
+    fig_main = (
         alt.Chart(df)
         .mark_circle(size=89)
         .encode(
@@ -104,7 +140,7 @@ def main():
         )
     )
 
-    fig2 = fig1.transform_regression(
+    fig2 = fig_main.transform_regression(
         x_values, "Happiness", extent=[-80, 80]
     ).mark_line()
 
@@ -139,21 +175,31 @@ def main():
 
     #%% Drawing plot
 
-    finalfig = fig1 + fig2 + fig3 + fig4 + fig5
+    finalfig = fig_main + fig2 + fig3 + fig4 + fig5
     # finalfig = fig1 + fig3 + fig4
     st.altair_chart(finalfig, use_container_width=True)
 
-    my_expander = st.beta_expander("Click here to see regression results")
+    my_expander = st.beta_expander("Click here to show/hide regression results")
     with my_expander:
-        st.write(lm)
+        fmt = {
+            "coef": "{:.2f}",
+            "se": "{:.2f}",
+            "T": "{:.2f}",
+            "pval": "{:.3f}",
+            "r2": "{:.2f}",
+            "adj_r2": "{:.2f}",
+        }
+        dfcols = ["names"]  # cols to show
+        dfcols += fmt.keys()
+        st.dataframe(lm[dfcols].style.format(fmt), height=233)
 
     #%% Writing GLM
     st.markdown("##### ")
-    eq1 = "Y_i = b_0 + b_1 X_1 + \epsilon_i"
+    eq1 = "y_i = b_0 + b_1 X_1 + \epsilon_i"
     st.latex(eq1)
     eq2 = eq1.replace("b_0", str(b0)).replace("b_1", str(b1))
     st.latex(eq2)
-    eq3 = r"Y_i = \beta_0 + \beta_1 X_1 + \epsilon_i"
+    eq3 = r"y_i = \beta_0 + \beta_1 X_1 + \epsilon_i"
     st.latex(eq3)
 
     # TODO add correlation
@@ -166,7 +212,7 @@ def main():
         "So if you want to predict any value $Y_i$, multiplY $b_1$ by its distance from the sun (in AU) and sum the intercept ($b_0$).",
     )
 
-    my_expander = st.beta_expander("Click to see Python and R code")
+    my_expander = st.beta_expander("Click to show/hide Python and R code")
     with my_expander:
         st.markdown(
             "Python: `pingouin.linear_regression(X, Y)`  # linear regression where X is the predictor and Y the observed variable"

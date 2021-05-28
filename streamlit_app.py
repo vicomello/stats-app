@@ -26,8 +26,8 @@ PAGES = {
     # "Start here": home,
     # "One-sample t-test": ttest_onesample,
     # "Independent-samples t-test": ttest_independent,
-    "Simple Linear Regression": regression,
-    "Multiple Linear Regression": multiple_regression,
+    "Simple linear regression": regression,
+    "Multiple linear regression": multiple_regression,
 }
 
 # Displaying the selection box

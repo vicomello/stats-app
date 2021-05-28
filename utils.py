@@ -39,7 +39,7 @@ def authors():
 # %%
 
 
-def simulate_y(X, b, residual_mean=0, residual_sd=10):
+def simulate_y(X, b, residual_sd=10):
     """Simulate pseudo-random regression response/outcome values with fixed regression coefficients.
 
     Args:
@@ -55,16 +55,41 @@ def simulate_y(X, b, residual_mean=0, residual_sd=10):
     n = X.shape[0] // 2
     X = X.copy()
     X.loc[:, "Intercept"] = 1
+    X = X[["Intercept", X.columns[:-1][0]]]
     errors1 = rand_norm_fixed(n=n, mean=0, sd=residual_sd)
+    # np.random.shuffle(errors1)
     errors2 = [-i for i in errors1]  # flip errors
+    # np.random.shuffle(errors2)
     if add0:
-        errors2.append(0)
+        errors1.append(0)
     errors = np.concatenate([errors1, errors2])
-    np.random.shuffle(errors)
-    y = X @ b + errors
+    y = (X @ b + errors).to_numpy()
     print(f"Requested b: {b}")
     print(
         f"Simulated b: {pg.linear_regression(X, y, add_intercept=False, coef_only=True)}"
     )
     print("Simulated outcome/response values:")
-    return y.to_numpy()
+    print(y)
+    return y
+
+
+# %%
+
+
+def simulate_x(n, min_max):
+    """Simulate n pseudo-random x values for regression.
+
+    Args:
+
+    Returns:
+
+    """
+    addval = n % 2
+    n = n // 2
+    min_max[1] /= 2
+    x = np.linspace(*min_max, n).round()
+    x.sort()
+    x = np.concatenate([x, x + min_max[1]])
+    if addval:
+        x = np.concatenate([[np.round(np.median(x))], x])
+    return x
