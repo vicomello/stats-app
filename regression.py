@@ -86,7 +86,7 @@ def main():
     lm = pg.linear_regression(df[[x_col]], df["Happiness"], add_intercept=True)
     b0, b1 = lm["coef"].round(2)
 
-    df["Predicted_Happiness"] = b0 + b1 * df["Age"]
+    df["Predicted_Happiness"] = b0 + b1 * df[x_col]
     df["Residual"] = df["Happiness"] - df["Predicted_Happiness"]
 
     # TODO pingouin correlation
