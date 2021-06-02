@@ -58,8 +58,8 @@ def main():
     slider_noise_params[3] = noise
 
     # TODO radio butons instead of separate checkbox (either mean center OR zscore—can't check both at the same time!)
-    mean_center_predictor = st.sidebar.checkbox("Mean-center predictor (Age)")
-    zscore_predictor = st.sidebar.checkbox("Z-score predictor (Age)")
+    predictor_change = st.sidebar.radio("Mean-center predictor (Age)", ('Raw','Mean-center predictor (Age)', 'Z-score predictor (Age)'))
+
 
     # TODO scale outcome/response
 
@@ -73,14 +73,14 @@ def main():
     df["Mean_Age"] = df["Age"].mean()
     df["Age_Centered"] = df["Age"] - df["Age"].mean()
     df["Age_zscore"] = (df["Age"] - df["Mean_Age"]) / df["Age"].std()
+    df["b0"] = b0
+    df["b1"] = b1
 
     X = "Age:Q"
-    if mean_center_predictor:
+    if predictor_change == 'Mean-center predictor (Age)':
         X = "Age_Centered:Q"
-        x_label = "Age (mean-centered)"  # for plotting label
-    if zscore_predictor:
+    if predictor_change == 'Z-score predictor (Age)':
         X = "Age_zscore:Q"
-        x_label = "Age (z-score)"
     x_col = X.replace(":Q", "")
 
     lm = pg.linear_regression(df[[x_col]], df["Happiness"], add_intercept=True)
@@ -113,9 +113,16 @@ def main():
         st.dataframe(df[dfcols].style.format(fmt), height=233)
 
     x_domain = [-100, 100]
-    if zscore_predictor:
+    if predictor_change == 'Z-score predictor (Age)':
         x_domain = [i / 20 for i in x_domain]
     y_domain = [-100, 100]
+
+        #%% interactive dots for model
+    for i in df.itertuples():
+        df.loc[
+            i.Index, "Model"
+        ] = f"{i.Happiness:.2f} = ({b0} + {b1} * {i.Age:.2f}) + {i.Residual:.2f}"
+        df
 
     # TODO make it interactive; change color scheme; add x/y labels
     fig_main = (
@@ -128,7 +135,15 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False),
             ),
-            tooltip=["Age", "Happiness"],
+            tooltip=[
+                "Age",
+                "Happiness",
+                "Predicted_Happiness",
+                "Residual",
+                "b1",
+                "b0",
+                "Model",
+            ],
         )
         .properties(height=377, width=377)
     )
@@ -159,7 +174,7 @@ def main():
         # .properties(height=fig_height)
     )
 
-    # TODO make dot interactive
+
     df_intercept = pd.DataFrame({"x": [0], "y": [b0], "b0 (intercept)": [b0]})
     fig_b0dot = (
         alt.Chart(df_intercept)

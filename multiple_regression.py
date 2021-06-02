@@ -33,8 +33,12 @@ def main():
 
     intercept = 10.00
     st.sidebar.markdown("Intercept = 10.0")
-    beta_humans = st.sidebar.slider('Beta for Humans',*beta_params_humans)
-    beta_martians = st.sidebar.slider('Beta for Martians',*beta_params_martians)
+    beta_humans = st.sidebar.slider('B for Humans',*beta_params_humans)
+    beta_martians = st.sidebar.slider('B for Martians',*beta_params_martians)
+
+    #%% mean centering and z scoring buttons
+    predictor_change = st.sidebar.radio("Mean-center predictor (Age)", ('Raw','Mean-center predictor (Age)', 'Z-score predictor (Age)'))
+    
 
     #%% defining linear regression
     
@@ -42,21 +46,44 @@ def main():
             "Age": np.arange (1, 60, 1.00),
             "Species": "Human",
             "Residual": utils.rand_norm_fixed(59,0,3),
-            "Predicted_Happiness": beta_humans * np.arange (1, 60, 1.00)
+            "Predicted_Happiness": beta_humans * np.arange (1, 60, 1.00),
+            "B1":beta_humans,
         }
     )
+    df1["Group_Mean"] = df1["Age"].mean()
+    df1["Age_Group_Centered"] = df1["Age"] - df1["Group_Mean"]
+    df1["Age_Z_Scored"] = (df1["Age"] - df1["Group_Mean"])/df1["Age"].std()
+
     df2 = pd.DataFrame({
             "Age": np.arange (1, 60, 1.00),
             "Species": "Martian",
             "Residual": utils.rand_norm_fixed(59,0,3),
-            "Predicted_Happiness": beta_martians * np.arange (1, 60, 1.00)
+            "Predicted_Happiness": beta_martians * np.arange (1, 60, 1.00),
+            "B1": beta_martians
         }
     )
+    df2["Group_Mean"] = df2["Age"].mean()
+    df2["Age_Group_Centered"] = df2["Age"] - df2["Group_Mean"]
+    df2["Age_Z_Scored"] = (df2["Age"] - df2["Group_Mean"])/df2["Age"].std()
+
     df = pd.concat([df1, df2], axis=0).reset_index(drop=True)   
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Happiness"] = df["Predicted_Happiness"] + df["Residual"]
     df["Grand_Mean"] = np.mean(df["Happiness"])
+    #df["Age_Centered"] = df["Age"] - df["Grand_Mean"]
     #how to generate a random value for each line?
+
+    x_domain = [-5, 70]
+    y_domain = [-65, 65]
+    
+    X = "Age:Q"
+    if predictor_change == 'Mean-center predictor (Age)':
+        X = "Age_Group_Centered:Q"
+        x_domain = [-30, 30]
+    if predictor_change == 'Z-score predictor (Age)':
+        X = "Age_Z_Scored:Q"
+        x_domain = [-30, 30]
+    x_col = X.replace(":Q", "")
 
     #%% title
     st.title("Multiple Linear regression")
@@ -79,94 +106,74 @@ def main():
         }
         dfcols = ["Age","Happiness", "Predicted_Happiness", "Residual"]  # cols to show
         st.dataframe(df[dfcols].style.format(fmt), height=233)
-
-    # _, col_fig, _ = st.beta_columns([0.1, 0.5, 0.1])  # hack to center figure
-    # with col_fig:
-    #     st.write("hi!")
-    #     #st.altair_chart(finalfig, use_container_width=False)
-    # #%% sliders
     
-    x_domain = [-5, 70]
-    y_domain = [-65, 65]
-    #fig_height = 377
+    #%% create tooltip for model
+    #TODO include the intercept in the model
+    for i in df.itertuples():
+        df.loc[
+            i.Index, "Model"
+        ] = f"{i.Happiness:.2f} = ({i.B1:.2f} * {i.Age:.2f}) + {i.Residual:.2f}"
+        df
+    
+    #%% setting dimensions
+
+    fig_height = 377
+    fig_width = 510
     
     fig1 = (
     alt.Chart(df)
     .mark_circle(size=89)
     .encode(
-    x=alt.X("Age:Q", scale=alt.Scale(domain=x_domain), axis=alt.Axis(grid=False)),
+    x=alt.X(X, scale=alt.Scale(domain=x_domain), axis=alt.Axis(grid=False)),
     y=alt.Y("Happiness:Q", scale=alt.Scale(domain=y_domain), axis=alt.Axis(grid=False)),
-    color="Species"
+    color="Species",
+    tooltip=[
+                "Age",
+                "Happiness",
+                "Species",
+                "Predicted_Happiness",
+                "Residual",
+                "B1",
+                #"b0", INTERCEPT
+                "Model",
+            ],
+    ).
+    properties(height=fig_height, width=fig_width)
     )
-    )
 
-    fig2 = fig1.transform_regression('Age', 'Happiness', groupby=['Species']).mark_line().interactive()
-    
-    # fig2 = (
-    #     alt.Chart(df1)
-    #     .mark_line(color="#51127c", size=3)
-    #     .encode(
-    #         x=alt.X(
-    #             "Age:Q"
-    #         ),
-    #         y=alt.Y(
-    #             "Happiness:Q"
-    #         ),
-    #     )
-    #     .interactive()
-    #     .properties(height=377)
-    # )
-
-    
-    # fig1 = (
-    #     alt.Chart(df)
-    #     .mark_circle(size=89)
-    #     .encode(
-    #         X=alt.X(
-    #             "Age:Q",
-    #             scale=alt.Scale(domain=X_domain),
-    #             axis=alt.Axis(grid=False)
-                
-    #         #aXis=alt.AXis(grid=False)
-    #         ),
-    #         Y=alt.Y(Y,
-    #             scale=alt.Scale(domain=Y_domain),
-    #             axis=alt.Axis(grid=False)
-    #         )
-    #     )
-    # )
-
-    #fig2 = fig1.transform_regression('Age', 'Happiness').mark_line()
+    fig2 = fig1.transform_regression(x_col, 'Happiness', groupby=['Species'], extent=[-300, 300]).mark_line().interactive()
     
     #%% Horizontal line
 
-    # fig3 = (
-    #     alt.Chart(pd.DataFrame({"Y": [0]}))
-    #     .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
-    #     .encode(y=alt.Y("Y:Q", axis=alt.Axis(title="")))
-    #     .properties(height=377)
-    # )
+    fig3 = (
+        alt.Chart(pd.DataFrame({"Y": [0]}))
+        .mark_rule(size=0.5, color="#000004", opacity=0.5, strokeDash=[3, 3])
+        .encode(y=alt.Y("Y:Q", axis=alt.Axis(title="")))
+        .properties(height=377)
+    )
 
     #%% Vertical Line
 
-    # fig4 = (
-    #     alt.Chart(pd.DataFrame({"x": [0]}))
-    #     .mark_rule(size=0.7, color="#51127c",opacity=0.5, strokeDash=[3, 3])
-    #     .encode(
-    #         x=alt.X("x:Q", axis=alt.Axis(title=""))
-    #         )
-    #         .interactive()
-    #     # .properties(height=fig_height)
-    # )
+    fig4 = (
+        alt.Chart(pd.DataFrame({"x": [0]}))
+        .mark_rule(size=0.7, color="#51127c",opacity=0.5, strokeDash=[3, 3])
+        .encode(
+            x=alt.X("x:Q", axis=alt.Axis(title=""))
+            )
+            .interactive()
+        # .properties(height=fig_height)
+    )
  
     
     #%% Drawing plot 
 
     #fig2 = fig1.transform_regression('Age', y_values).mark_line()
 
-    finalfig =  fig1 + fig2
+    finalfig =  fig1 + fig2 + fig3 + fig4
     #finalfig = fig1 + fig3 + fig4
-    st.altair_chart(finalfig, use_container_width=True)
+    _, col_fig, _ = st.beta_columns([0.1, 0.5, 0.2])  # hack to center figure
+    with col_fig:
+        st.altair_chart(finalfig, use_container_width=False)
     
     
     lm = pg.linear_regression(df["Age"], df["Happiness"], add_intercept=True)
