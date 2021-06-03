@@ -11,34 +11,42 @@ import utils
 
 #%% config
 def main():
-    #st.set_page_config(
-    #    page_title="Regression",
-    #    laXout="wide",
-    #    initial_sidebar_state="auto",
-    #)
-    #%% computations
-    #range_ = [-10.00, 10.00, 0.00]
+
     beta_params_humans = [
         -1.00,  # min
         1.00,  # maX
         0.25,  #start
-        0.01  #step
+        0.10  #step
     ]
     beta_params_martians = [
         -1.00,  # min
         1.00,  # maX
         0.75,  #start
-        0.01  #step
+        0.10  #step
+    ]
+    beta0_params_humans = [
+        -5.00,  # min
+        5.00,  # maX
+        0.00,  #start
+        1.00  #step
+    ]
+    beta0_params_martians = [
+        -5.00,  # min
+        5.00,  # maX
+        2.00,  #start
+        1.00  #step
     ]
 
-    intercept = 10.00
-    st.sidebar.markdown("Intercept = 10.0")
-    beta_humans = st.sidebar.slider('B for Humans',*beta_params_humans)
-    beta_martians = st.sidebar.slider('B for Martians',*beta_params_martians)
+
+    #intercept = 10.00
+    #st.sidebar.markdown("Intercept = 10.0")
+    beta0_humans = st.sidebar.slider('B0 for Humans',*beta0_params_humans)
+    beta0_martians = st.sidebar.slider('B0 for Martians',*beta0_params_martians)    
+    beta_humans = st.sidebar.slider('B1 for Humans',*beta_params_humans)
+    beta_martians = st.sidebar.slider('B1 for Martians',*beta_params_martians)
 
     #%% mean centering and z scoring buttons
     predictor_change = st.sidebar.radio("Mean-center predictor (Age)", ('Raw','Mean-center predictor (Age)', 'Z-score predictor (Age)'))
-    
 
     #%% defining linear regression
     
@@ -46,8 +54,9 @@ def main():
             "Age": np.arange (1, 60, 1.00),
             "Species": "Human",
             "Residual": utils.rand_norm_fixed(59,0,3),
-            "Predicted_Happiness": beta_humans * np.arange (1, 60, 1.00),
+            "Predicted_Happiness": beta0_humans + beta_humans * np.arange (1, 60, 1.00),
             "B1":beta_humans,
+            "B0": beta0_humans
         }
     )
     df1["Group_Mean"] = df1["Age"].mean()
@@ -58,8 +67,9 @@ def main():
             "Age": np.arange (1, 60, 1.00),
             "Species": "Martian",
             "Residual": utils.rand_norm_fixed(59,0,3),
-            "Predicted_Happiness": beta_martians * np.arange (1, 60, 1.00),
-            "B1": beta_martians
+            "Predicted_Happiness": beta0_martians + beta_martians * np.arange (1, 60, 1.00),
+            "B1": beta_martians,
+            "B0": beta0_martians
         }
     )
     df2["Group_Mean"] = df2["Age"].mean()
@@ -73,8 +83,16 @@ def main():
     #df["Age_Centered"] = df["Age"] - df["Grand_Mean"]
     #how to generate a random value for each line?
 
-    x_domain = [-5, 70]
-    y_domain = [-65, 65]
+    # x_domain = [-100, 100]
+    # y_domain = [-100, 100]
+
+    x_domain = [-100, 100]
+    if predictor_change == 'Z-score predictor (Age)':
+        x_domain = [i / 20 for i in x_domain]
+    elif predictor_change == 'Mean-center predictor (Age)':
+        x_domain = [i / 20 for i in x_domain]
+    y_domain = [-100, 100]
+    
     
     X = "Age:Q"
     if predictor_change == 'Mean-center predictor (Age)':
@@ -82,7 +100,7 @@ def main():
         x_domain = [-30, 30]
     if predictor_change == 'Z-score predictor (Age)':
         X = "Age_Z_Scored:Q"
-        x_domain = [-30, 30]
+        x_domain = [-30, 30]/np.std(df["Age"])
     x_col = X.replace(":Q", "")
 
     #%% title
