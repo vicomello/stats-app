@@ -296,7 +296,7 @@ def main():
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
             color=alt.Color("Species"),
-            tooltip=["Happiness", "Species", x_coding],
+            tooltip=["Happiness", x_coding],
         )
         .interactive()
         .properties(height=fig_height)
