@@ -21,7 +21,7 @@ def main():
         " ",  # label
         2,  # min
         50,  # max
-        10,  # start value
+        4,  # start value
         1,  # step
         "%f",  # format
     ]
@@ -48,7 +48,7 @@ def main():
         "",  # label
         2,  # min
         50,  # max
-        10,  # start value
+        4,  # start value
         1,  # step
         "%f",  # format
     ]
@@ -127,7 +127,7 @@ def main():
         code2_params[3] = code2 + 0.01
         code2 = st.slider(*code2_params)
 
-    center_code = st.sidebar.checkbox("Mean-center predictor")
+    center_code = st.sidebar.checkbox("Mean-center predictor (code)")
     if center_code:
         x_coding = "Species_code_centered"
     else:
@@ -281,7 +281,7 @@ def main():
     #%% fig 2: the means for each sample and a line connecting them
 
     # plot means
-    fig2 = (
+    fig_mean = (
         alt.Chart(df_mean)
         .mark_point(filled=True, size=233)
         .encode(
@@ -296,7 +296,7 @@ def main():
                 axis=alt.Axis(grid=False, title="Happiness (y)", titleFontSize=13),
             ),
             color=alt.Color("Species"),
-            tooltip=["Happiness", x_coding],
+            tooltip=["Happiness", "Species", x_coding],
         )
         .interactive()
         .properties(height=fig_height)
@@ -325,7 +325,7 @@ def main():
 
     # %% combine figurs
 
-    finalfig = (fig_main + fig2 + fig3 + fig_horizontal + fig_vertical) | fig_violin
+    finalfig = (fig_main + fig_mean + fig3 + fig_horizontal + fig_vertical) | fig_violin
     finalfig.configure_axis(grid=False)
     finalfig.configure_view(stroke=None)
 

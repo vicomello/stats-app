@@ -15,7 +15,7 @@ def main():
         "Sample size (no. of data points)",  # label
         2,  # min
         100,  # max
-        16,  # start value
+        8,  # start value
         2,  # step
         "%f",  # format
     ]
@@ -24,15 +24,15 @@ def main():
         "b0 (intercept)",  # label
         -30.0,  # min
         30.0,  # max
-        5.0,  # start value
+        10.0,  # start value
         0.1,  # step
         "%f",  # format
     ]
     slider_b1_params = [
         "b1 (slope)",
-        -1.5,
-        1.5,
-        1.0,
+        -3.0,
+        3.0,
+        0.5,
         0.1,
         "%f",  # format
     ]
@@ -57,6 +57,8 @@ def main():
     noise = st.sidebar.slider(*slider_noise_params)
     slider_noise_params[3] = noise
 
+    np.random.seed(int(n + b0 + b1 + noise))  # hack: freeze state
+
     # TODO radio butons instead of separate checkbox (either mean center OR zscore—can't check both at the same time!)
     mean_center_predictor = st.sidebar.checkbox("Mean-center predictor (Age)")
     zscore_predictor = st.sidebar.checkbox("Z-score predictor (Age)")
@@ -64,7 +66,7 @@ def main():
     # TODO scale outcome/response
 
     #%% defining linear regression
-    df = pd.DataFrame({"Age": utils.simulate_x(n, [5, 60])})
+    df = pd.DataFrame({"Age": utils.simulate_x(n, [10, 50])})
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Happiness"] = utils.simulate_y(
         df[["Age"]], np.array([b0, b1]), residual_sd=noise
@@ -191,9 +193,15 @@ def main():
 
     #%% Writing GLM
     st.markdown("##### ")
-    eq1 = "y_i = b_0 + b_1 X_1 + \epsilon_i"
+    eq1 = "y_i = b_0 + b_1 x_1 + \epsilon_i"
     st.latex(eq1)
-    eq2 = eq1.replace("b_0", str(b0)).replace("b_1", str(b1))
+    eq2 = (
+        eq1.replace("b_0", str(b0))
+        .replace("b_1", str(b1))
+        .replace("y_i", "happiness_i")
+        .replace("x_1", "\ age_i")
+        .replace("\epsilon_i", "residual_i")
+    )
     st.latex(eq2)
     eq3 = r"y_i = \beta_0 + \beta_1 X_1 + \epsilon_i"
     st.latex(eq3)
@@ -201,11 +209,11 @@ def main():
     # TODO add correlation
 
     st.markdown(
-        "where $X_i$ are the data points ($X_1, X_2, ... X_{n-1}, X_n$), $b_0$ is the intercept (the value at which the line crosses the $$Y$$-axis), $b_1$ is the change in Y when you change one unit in X, and $\epsilon_i$ is the residual associated with data point $Y_i$."
+        "where $x_i$ are the data points ($x_1, x_2, ... x_{n-1}, x_n$), $b_0$ is the intercept (the value at which the line crosses the $$y$$-axis), $b_1$ is the change in Y when you change one unit in x (age_i), and $\epsilon_i$ is the residual associated with data point $y_i$ (happiness_i)."
     )
     st.write(
-        "This model says that the **best predictor of $Y_i$ is $b_1$**, which is the **predictor** or the **independent variable**.",
-        "So if you want to predict any value $Y_i$, multiplY $b_1$ by its distance from the sun (in AU) and sum the intercept ($b_0$).",
+        "This model says that the **best predictor of $y_i$ is $b_1$**, which is the **predictor** or the **independent variable**.",
+        "So if you want to predict any value $y_i$, multiplY $b_1$ by its distance from the sun (in AU) and sum the intercept ($b_0$).",
     )
 
     my_expander = st.beta_expander("Click to show/hide Python and R code")
