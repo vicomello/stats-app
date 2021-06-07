@@ -109,8 +109,8 @@ def main():
         sd2 = st.slider(*slider_sd2_params)
         slider_sd2_params[3] = sd2
 
-    code1_params = [" ", -1.0, 1.0, 0.0, 0.01]
-    code2_params = ["  ", -1.0, 1.0, 1.0, 0.01]
+    code1_params = ["Human", -1.0, 1.0, 0.0, 0.01, "%f"]
+    code2_params = ["Martian", -1.0, 1.0, 1.0, 0.01, "%f"]
 
     # sidebar container - advanced settings
     st.sidebar.markdown("#### Advanced options")
@@ -132,6 +132,8 @@ def main():
         x_coding = "Species_code_centered"
     else:
         x_coding = "Species_code"
+
+    np.random.seed(int(n + n2 + mean + mean2 + sd + sd2))  # hack: freeze state
 
     #%% simulate data
 
@@ -457,8 +459,13 @@ def main():
 
     eq1 = "y_i = b_0 + b_1 x_1 + \epsilon_i"
     st.latex(eq1)
-    eq2 = eq1.replace("b_0", str(np.round(b0, 2)))
-    eq2 = eq2.replace("b_1", str(np.round(b1, 2)))
+    eq2 = (
+        eq1.replace("b_0", str(np.round(b0, 2)))
+        .replace("b_1", str(np.round(b1, 2)))
+        .replace("y_i", "happiness_i")
+        .replace("\epsilon_i", "residual_i")
+        .replace("x_1", f"\\times ({code1} \ or \ {code2})")
+    )
     st.latex(eq2)
 
     # FIXME fix text in this section!
