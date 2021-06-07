@@ -69,8 +69,6 @@ def main():
         "", ("Use raw values", "Mean-center", "Z-score"), key="y"
     )
 
-    # TODO scale outcome/response
-
     #%% defining linear regression
     df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-20, 40])})
     df["i"] = np.arange(1, df.shape[0] + 1)
@@ -95,6 +93,10 @@ def main():
         X = "Hunger_zscore:Q"
         x_domain = [i / 20 for i in x_domain]
     x_col = X.replace(":Q", "")
+
+    # TODO scale outcome/response (same as if/else statement above)
+
+    # TODO need to think about how to refactor the code below (too repetitive) (depends on how we want to present latex)
 
     lm = pg.linear_regression(df[[x_col]], df["Happiness"], add_intercept=True)
     b0, b1 = lm["coef"].round(2)
@@ -175,7 +177,7 @@ def main():
     )
     fig_main.interactive()  # https://github.com/altair-viz/altair/issues/2159
 
-    # TODO make line interactive (show model)
+    # TODO make line interactive (show tooltip model)
     fig_regline = fig_main.transform_regression(
         x_col, "Happiness", extent=[-300, 300]
     ).mark_line(size=3, color="#b73779")
