@@ -64,7 +64,7 @@ def main():
     # TODO scale outcome/response
 
     #%% defining linear regression
-    df = pd.DataFrame({"Age": utils.simulate_x(n, [5, 70])})
+    df = pd.DataFrame({"Age": utils.simulate_x(n, [5, 60])})
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Happiness"] = utils.simulate_y(
         df[["Age"]], np.array([b0, b1]), residual_sd=noise
