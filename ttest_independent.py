@@ -457,14 +457,14 @@ def main():
 
     # %% equations
 
-    eq1 = "y_i = b_0 + b_1 x_1 + \epsilon_i"
+    eq1 = "y_i = b_0 + b_1 x_i + \epsilon_i"
     st.latex(eq1)
     eq2 = (
         eq1.replace("b_0", str(np.round(b0, 2)))
         .replace("b_1", str(np.round(b1, 2)))
         .replace("y_i", "happiness_i")
         .replace("\epsilon_i", "residual_i")
-        .replace("x_1", f"\\times ({code1} \ or \ {code2})")
+        .replace("x_i", f"\\times (x_i: {code1} \ or \ {code2})")
     )
     st.latex(eq2)
 

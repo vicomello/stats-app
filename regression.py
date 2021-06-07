@@ -39,7 +39,7 @@ def main():
     slider_noise_params = [
         "Noise (standard deviation)",
         0.0,
-        15.0,
+        50.0,
         7.5,
         0.1,
         "%f",  # format
@@ -76,6 +76,10 @@ def main():
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Happiness"] = utils.simulate_y(df[["Hunger"]], np.array([b0, b1]), noise)
     df["Mean_Happiness"] = df["Happiness"].mean()
+    df["Happiness_Centered"] = df["Happiness"] - df["Happiness"].mean()
+    df["Happiness_zscore"] = (df["Happiness"] - df["Mean_Happiness"]) / df[
+        "Happiness"
+    ].std()
     df["Mean_Hunger"] = df["Hunger"].mean()
     df["Hunger_Centered"] = df["Hunger"] - df["Hunger"].mean()
     df["Hunger_zscore"] = (df["Hunger"] - df["Mean_Hunger"]) / df["Hunger"].std()
@@ -94,6 +98,19 @@ def main():
 
     lm = pg.linear_regression(df[[x_col]], df["Happiness"], add_intercept=True)
     b0, b1 = lm["coef"].round(2)
+
+    lm_raw = pg.linear_regression(df[["Hunger"]], df["Happiness"], add_intercept=True)
+    b0_raw, b1_raw = lm_raw["coef"].round(2)
+
+    lm_zX = pg.linear_regression(
+        df[["Hunger_zscore"]], df["Happiness"], add_intercept=True
+    )
+    b0_zX, b1_zX = lm_zX["coef"].round(2)
+
+    lm_zXY = pg.linear_regression(
+        df[["Hunger_zscore"]], df["Happiness_zscore"], add_intercept=True
+    )
+    b0_zXY, b1_zXY = lm_zXY["coef"].round(2)
 
     df["Predicted_Happiness"] = b0 + b1 * df[x_col]
     df["Residual"] = df["Happiness"] - df["Predicted_Happiness"]
@@ -214,23 +231,24 @@ def main():
 
     #%% Writing GLM
     st.markdown("##### ")
-    eq1 = "y_i = b_0 + b_1 x_1 + \epsilon_i"
+    eq1 = "y_i = b_0 + b_1 x_i + \epsilon_i"
     st.latex(eq1)
     eq2 = (
-        eq1.replace("b_0", str(b0))
-        .replace("b_1", str(b1))
+        eq1.replace("b_0", str(b0_raw))
+        .replace("b_1", str(b1_raw))
         .replace("y_i", "happiness_i")
-        .replace("x_1", "\ hunger_i")
+        .replace("x_i", "\ hunger_i")
         .replace("\epsilon_i", "residual_i")
     )
     st.latex(eq2)
-    eq3 = r"y_i = \beta_0 + \beta_1 x_1 + \epsilon_i"
+    eq3 = r"y_i = \beta_0 + \beta_1 x_i + \epsilon_i"
     st.latex(eq3)
 
-    eq3 = r"y_i = \beta_0 + \beta_1 x_1 + \epsilon_i"  # replace with beta y_value
+    eq3 = r"y_i = \beta_0 + \beta_1 x_i + \epsilon_i"  # TODO replace with beta actual values
+    eq3 = eq3.replace(r"\beta_0", f"{b0_zX}").replace(r"\beta_1", f"{b1_zX}")
     st.latex(eq3)
 
-    st.latex("r_{pearson} = some \ number")
+    st.latex("r_{pearson} = some \ number")  # TODO  insert correlation
 
     # TODO add correlation
 
