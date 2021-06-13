@@ -57,7 +57,6 @@ def main():
     noise = st.sidebar.slider(*slider_noise_params)
     slider_noise_params[3] = noise
 
-    # TODO radio butons instead of separate checkbox (either mean center OR zscore—can't check both at the same time!)
     predictor_change = st.sidebar.radio("Mean-center predictor (Age)", ('Raw','Mean-center predictor (Age)', 'Z-score predictor (Age)'))
 
 
@@ -150,6 +149,7 @@ def main():
     fig_main.interactive()  # https://github.com/altair-viz/altair/issues/2159
 
     # TODO make line interactive (show model)
+    #f"happiness = {b0} + *{ b1}"
     fig_regline = fig_main.transform_regression(
         x_col, "Happiness", extent=[-300, 300]
     ).mark_line()
