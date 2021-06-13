@@ -21,7 +21,7 @@ def main():
         " ",  # label
         2,  # min
         50,  # max
-        10,  # start value
+        4,  # start value
         1,  # step
         "%f",  # format
     ]
@@ -48,7 +48,7 @@ def main():
         "",  # label
         2,  # min
         50,  # max
-        10,  # start value
+        4,  # start value
         1,  # step
         "%f",  # format
     ]
@@ -109,8 +109,8 @@ def main():
         sd2 = st.slider(*slider_sd2_params)
         slider_sd2_params[3] = sd2
 
-    code1_params = [" ", -1.0, 1.0, 0.0, 0.01]
-    code2_params = ["  ", -1.0, 1.0, 1.0, 0.01]
+    code1_params = ["Human", -1.0, 1.0, 0.0, 0.01, "%f"]
+    code2_params = ["Martian", -1.0, 1.0, 1.0, 0.01, "%f"]
 
     # sidebar container - advanced settings
     st.sidebar.markdown("#### Advanced options")
@@ -127,11 +127,13 @@ def main():
         code2_params[3] = code2 + 0.01
         code2 = st.slider(*code2_params)
 
-    center_code = st.sidebar.checkbox("Mean-center predictor")
+    center_code = st.sidebar.checkbox("Mean-center predictor (code)")
     if center_code:
         x_coding = "Species_code_centered"
     else:
         x_coding = "Species_code"
+
+    np.random.seed(int(n + n2 + mean + mean2 + sd + sd2))  # hack: freeze state
 
     #%% simulate data
 
@@ -279,7 +281,7 @@ def main():
     #%% fig 2: the means for each sample and a line connecting them
 
     # plot means
-    fig2 = (
+    fig_mean = (
         alt.Chart(df_mean)
         .mark_point(filled=True, size=233)
         .encode(
@@ -323,7 +325,7 @@ def main():
 
     # %% combine figurs
 
-    finalfig = (fig_main + fig2 + fig3 + fig_horizontal + fig_vertical) | fig_violin
+    finalfig = (fig_main + fig_mean + fig3 + fig_horizontal + fig_vertical) | fig_violin
     finalfig.configure_axis(grid=False)
     finalfig.configure_view(stroke=None)
 
@@ -455,10 +457,15 @@ def main():
 
     # %% equations
 
-    eq1 = "y_i = b_0 + b_1 x_1 + \epsilon_i"
+    eq1 = "y_i = b_0 + b_1 x_i + \epsilon_i"
     st.latex(eq1)
-    eq2 = eq1.replace("b_0", str(np.round(b0, 2)))
-    eq2 = eq2.replace("b_1", str(np.round(b1, 2)))
+    eq2 = (
+        eq1.replace("b_0", str(np.round(b0, 2)))
+        .replace("b_1", str(np.round(b1, 2)))
+        .replace("y_i", "happiness_i")
+        .replace("\epsilon_i", "residual_i")
+        .replace("x_i", f"\\times (x_i: {code1} \ or \ {code2})")
+    )
     st.latex(eq2)
 
     # FIXME fix text in this section!

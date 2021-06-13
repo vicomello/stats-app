@@ -25,9 +25,9 @@ st.set_page_config(
 PAGES = {
     # "Start here": home,
     # "One-sample t-test": ttest_onesample,
-    "Independent-samples t-test": ttest_independent,
+    # "Independent-samples t-test": ttest_independent,
     "Simple linear regression": regression,
-    "Multiple linear regression": multiple_regression,
+    # "Multiple linear regression": multiple_regression,
 }
 
 # Displaying the selection box

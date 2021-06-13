@@ -46,6 +46,8 @@ def main():
     sd = st.sidebar.slider(*slider_sd_params)
     slider_sd_params[3] = sd
 
+    np.random.seed(int(n + mean + sd))  # hack: fix state
+
     # %% create/show dataframe
 
     df1 = pd.DataFrame({"Happiness": utils.rand_norm_fixed(n, mean, sd), "Rating": 0})
@@ -250,7 +252,11 @@ def main():
     st.markdown("##### ")
     eq1 = "y_i = b_0 + \epsilon_i"
     st.latex(eq1)
-    st.latex(eq1.replace("b_0", str(mean)))
+    st.latex(
+        eq1.replace("b_0", str(mean))
+        .replace("y_i", "happiness_i")
+        .replace("\epsilon_i", "residual_i")
+    )
 
     st.markdown(
         "where $y_i$ are the data points ($y_1, y_2, ... y_{n-1}, y_n$), $b_0$ is the intercept (the value at which the line crosses the $$y$$-axis), $\epsilon_i$ is the residual associated with data point $y_i$."
