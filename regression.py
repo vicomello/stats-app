@@ -75,9 +75,7 @@ def main():
     df["Happiness"] = utils.simulate_y(df[["Hunger"]], np.array([b0, b1]), noise)
     df["Mean_Happiness"] = df["Happiness"].mean()
     df["Happiness_Centered"] = df["Happiness"] - df["Happiness"].mean()
-    df["Happiness_zscore"] = (df["Happiness"] - df["Mean_Happiness"]) / df[
-        "Happiness"
-    ].std()
+    df["Happiness_zscore"] = (df["Happiness"] - df["Mean_Happiness"]) / df["Happiness"].std()
     df["Mean_Hunger"] = df["Hunger"].mean()
     df["Hunger_Centered"] = df["Hunger"] - df["Hunger"].mean()
     df["Hunger_zscore"] = (df["Hunger"] - df["Mean_Hunger"]) / df["Hunger"].std()
@@ -86,13 +84,30 @@ def main():
 
     X = "Hunger:Q"
     x_domain = [-100, 100]  # figure x domain
-    y_domain = [-100, 100]
+    title_x = "Hunger (Raw)"
     if predictor_scale == "Mean-center":
         X = "Hunger_Centered:Q"
+        title_x = "Hunger Mean-Centered"
     elif predictor_scale == "Z-score":
         X = "Hunger_zscore:Q"
+        title_x = "Hunger Z-Scored"
         x_domain = [i / 20 for i in x_domain]
     x_col = X.replace(":Q", "")
+
+
+    Y = "Happiness:Q"
+    y_domain = [-100, 100]
+    title_y = "Happiness (Raw)"
+    if outcome_scale == "Mean-center":
+        Y = "Happiness_Centered:Q"
+        title_y = "Happiness Mean-Centered"
+    elif outcome_scale == "Z-score":
+        Y = "Happiness_zscore:Q"
+        title_y = "Happiness Z-Scored"
+        y_domain = [i / 20 for i in y_domain]
+    y_col = Y.replace(":Q", "")
+
+
 
     # TODO scale outcome/response (same as if/else statement above)
 
@@ -157,11 +172,15 @@ def main():
         alt.Chart(df)
         .mark_circle(size=55, color="#3b528b", opacity=0.8)
         .encode(
-            x=alt.X(X, scale=alt.Scale(domain=x_domain), axis=alt.Axis(grid=False)),
+            x=alt.X(X, 
+                scale=alt.Scale(domain=x_domain),
+                axis=alt.Axis(grid=False),
+                title=title_x),
             y=alt.Y(
-                "Happiness:Q",
+                Y,
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False),
+                title=title_y,
             ),
             tooltip=[
                 "Hunger",
@@ -179,7 +198,7 @@ def main():
 
     # TODO make line interactive (show tooltip model)
     fig_regline = fig_main.transform_regression(
-        x_col, "Happiness", extent=[-300, 300]
+        x_col, y_col, extent=[-300, 300]
     ).mark_line(size=3, color="#b73779")
     fig_regline.interactive()
 
