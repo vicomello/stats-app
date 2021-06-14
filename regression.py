@@ -70,6 +70,11 @@ def main():
         "", ("Use raw values", "Mean-center", "Z-score"), key="y"
     )
 
+    if predictor_scale == "Z-score":
+        st.sidebar.markdown("When predictor is z-scored, B1 is Beta.")
+        if outcome_scale == "Z-score":
+            st.sidebar.markdown("Outcome and predictor are z-scored. B1=correlation.")
+
     #%% defining linear regression
     df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-20, 40])})
     df["i"] = np.arange(1, df.shape[0] + 1)
