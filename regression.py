@@ -1,5 +1,6 @@
 #%%
 
+from altair.vegalite.v4.schema.channels import Tooltip
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -163,7 +164,7 @@ def main():
         ] = f"{i.Happiness:.2f} = ({b0} + {b1} * {i.Hunger:.2f}) + {i.Residual:.2f}"
         df
 
-    # TODO make it interactive; change color scheme; add x/y labels
+    # TODO make it interactive;
     fig_main = (
         alt.Chart(df)
         .mark_circle(size=55, color="#3b528b", opacity=0.8)
@@ -192,10 +193,13 @@ def main():
     )
     fig_main.interactive()  # https://github.com/altair-viz/altair/issues/2159
 
-    # TODO make line interactive (show tooltip model)
+    # TODO make line interactive (show tooltip model) 
+    # https://stackoverflow.com/questions/53287928/tooltips-in-altair-line-charts (haven't implemented it yet)
+
     fig_regline = fig_main.transform_regression(
         x_col, y_col, extent=[-300, 300]
     ).mark_line(size=3, color="#b73779")
+    
     fig_regline.interactive()
 
     #%% Horizontal line
@@ -268,8 +272,6 @@ def main():
     corr = round(pg.corr(df[x_col], df[y_col]).r,2)
     #st.latex(f"correlation coefficient: {corr.values[0]}")  # TODO  insert correlation
     st.latex(r"\textrm{correlation coefficient}: " + str(corr.values[0]))  # TODO  insert correlation
-
-    # TODO add correlation
 
     st.markdown(
         "where $x_i$ are the data points ($x_1, x_2, ... x_{n-1}, x_n$), $b_0$ is the intercept (the value at which the line crosses the $$y$$-axis), $b_1$ is the change in Y when you change one unit in x (hunger_i), and $\epsilon_i$ is the residual associated with data point $y_i$ (happiness_i)."
