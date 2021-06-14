@@ -71,9 +71,8 @@ def main():
     )
 
     if predictor_scale == "Z-score":
-        st.sidebar.markdown("When predictor is z-scored, B1 is Beta.")
         if outcome_scale == "Z-score":
-            st.sidebar.markdown("Outcome and predictor are z-scored. B1=correlation.")
+            st.sidebar.markdown("Outcome and predictor are z-scored. B1=correlation=Beta.")
 
     #%% defining linear regression
     df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-20, 40])})
