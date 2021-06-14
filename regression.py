@@ -107,27 +107,23 @@ def main():
         y_domain = [i / 20 for i in y_domain]
     y_col = Y.replace(":Q", "")
 
-
-
-    # TODO scale outcome/response (same as if/else statement above)
-
     # TODO need to think about how to refactor the code below (too repetitive) (depends on how we want to present latex)
 
-    lm = pg.linear_regression(df[[x_col]], df["Happiness"], add_intercept=True)
+    lm = pg.linear_regression(df[x_col], df[y_col], add_intercept=True)
     b0, b1 = lm["coef"].round(2)
 
-    lm_raw = pg.linear_regression(df[["Hunger"]], df["Happiness"], add_intercept=True)
-    b0_raw, b1_raw = lm_raw["coef"].round(2)
+    # lm_raw = pg.linear_regression(df[["Hunger"]], df["Happiness"], add_intercept=True)
+    # b0_raw, b1_raw = lm_raw["coef"].round(2)
 
-    lm_zX = pg.linear_regression(
-        df[["Hunger_zscore"]], df["Happiness"], add_intercept=True
-    )
-    b0_zX, b1_zX = lm_zX["coef"].round(2)
+    # lm_zX = pg.linear_regression(
+    #     df[["Hunger_zscore"]], df["Happiness"], add_intercept=True
+    # )
+    # b0_zX, b1_zX = lm_zX["coef"].round(2)
 
-    lm_zXY = pg.linear_regression(
-        df[["Hunger_zscore"]], df["Happiness_zscore"], add_intercept=True
-    )
-    b0_zXY, b1_zXY = lm_zXY["coef"].round(2)
+    # lm_zXY = pg.linear_regression(
+    #     df[["Hunger_zscore"]], df["Happiness_zscore"], add_intercept=True
+    # )
+    # b0_zXY, b1_zXY = lm_zXY["coef"].round(2)
 
     df["Predicted_Happiness"] = b0 + b1 * df[x_col]
     df["Residual"] = df["Happiness"] - df["Predicted_Happiness"]
@@ -255,8 +251,8 @@ def main():
     eq1 = "y_i = b_0 + b_1 x_i + \epsilon_i"
     st.latex(eq1)
     eq2 = (
-        eq1.replace("b_0", str(b0_raw))
-        .replace("b_1", str(b1_raw))
+        eq1.replace("b_0", str(b0))
+        .replace("b_1", str(b1))
         .replace("y_i", "happiness_i")
         .replace("x_i", "\ hunger_i")
         .replace("\epsilon_i", "residual_i")
@@ -266,10 +262,12 @@ def main():
     st.latex(eq3)
 
     eq3 = r"y_i = \beta_0 + \beta_1 x_i + \epsilon_i"  # TODO replace with beta actual values
-    eq3 = eq3.replace(r"\beta_0", f"{b0_zX}").replace(r"\beta_1", f"{b1_zX}")
+    eq3 = eq3.replace(r"\beta_0", f"{b0}").replace(r"\beta_1", f"{b1}")
     st.latex(eq3)
 
-    st.latex("r_{pearson} = some \ number")  # TODO  insert correlation
+    corr = round(pg.corr(df[x_col], df[y_col]).r,2)
+    #st.latex(f"correlation coefficient: {corr.values[0]}")  # TODO  insert correlation
+    st.latex(r"\textrm{correlation coefficient}: " + str(corr.values[0]))  # TODO  insert correlation
 
     # TODO add correlation
 
