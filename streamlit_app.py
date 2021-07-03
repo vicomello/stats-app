@@ -10,6 +10,7 @@ import multiple_regression
 import ttest_independent
 import ttest_onesample
 import utils
+import clustering_regression
 
 #%% Page
 
@@ -26,7 +27,8 @@ PAGES = {
     # "Start here": home,
     # "One-sample t-test": ttest_onesample,
     # "Independent-samples t-test": ttest_independent,
-    "Simple linear regression": regression,
+    #"Simple linear regression": regression,
+    "Clustering Regression": clustering_regression,
     # "Multiple linear regression": multiple_regression,
 }
 
