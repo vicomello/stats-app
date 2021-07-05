@@ -63,11 +63,20 @@ def main():
     slider_b0_params[3] = b0
 
     #b1 = st.sidebar.slider(*slider_b1_params)
-    b1 = 1
+    b1 = -10
     slider_b1_params[3] = b1
 
     cluster = st.sidebar.slider(*slider_n_clusters)
     slider_n_clusters[3] = cluster
+
+    if cluster == 0:
+        st.sidebar.markdown("This is equivalent to a regression model (no clustering.)")
+    elif cluster == 1:
+        st.sidebar.markdown("Equivalent to a one-sample t-test.")
+    elif cluster == 2:
+        st.sidebar.markdown("Equivalent to an independent samples t-test.")
+    elif cluster == 3:
+        st.sidebar.markdown("Equivalent to an ANOVA.")
 
     #noise = st.sidebar.slider(*slider_noise_params)
     noise = 7.5
@@ -90,7 +99,8 @@ def main():
     #         st.sidebar.markdown("Outcome and predictor are z-scored. B1=correlation=Beta.")
 
     #%% defining linear regression
-    df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-20, 40])})
+    #df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-2, 2])})
+    df = pd.DataFrame({"Hunger": np.random.uniform(low=-2, high=2, size=(n,))})
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Hunger_Code"] = df["Hunger"]
     df["Happiness"] = utils.simulate_y(df[["Hunger"]], np.array([b0, b1]), noise)
@@ -104,7 +114,7 @@ def main():
     df["b1"] = b1
 
     X = "Hunger:Q"
-    x_domain = [-100, 100]  # figure x domain
+    x_domain = [-2.5, 2.5]  # figure x domain
     title_x = "Hunger (Raw)"
     # if predictor_scale == "Mean-center":
     #     X = "Hunger_Centered:Q"
@@ -116,16 +126,16 @@ def main():
     x_col = "Hunger"
 
     if cluster == 1:
-        df["Hunger_Code"] = np.full((df.shape), 20)
+        df["Hunger_Code"] = np.full((df.shape), 1)
     elif cluster == 2:
         a = np.empty((df.shape[0],))
-        a[::2] = 20
-        a[1::2] = -20
+        a[::2] = 1
+        a[1::2] = -1
         df["Hunger_Code"] = a
     elif cluster == 3:
         a = np.empty((df.shape[0],))
-        a[::3] = 20
-        a[1::3] = -20
+        a[::3] = 1
+        a[1::3] = -1
         a[2::3] = 0
         df["Hunger_Code"] = a
 
@@ -167,11 +177,12 @@ def main():
 
     #%% title
 
-    st.title("Simple linear regression")
+    st.title("All tests are special cases of regression.")
     st.markdown(
-        "We use a linear regression model when we want to understand how the change in a variable Y influences on another variable X."
+        "Have you ever heard that 'all statistical tests are just special cases of regression?'." 
+        "Play with the slider by changing the number of groups and see how all tests are just special cases of regression!"
     )
-    st.markdown("### How does hunger relate to happiness?")
+    st.markdown("### Number of clusters and tests")
     st.write("Lorem Ipsum dolor.")
 
     expander_df = st.beta_expander("Click here to see simulated data")
