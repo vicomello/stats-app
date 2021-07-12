@@ -113,7 +113,7 @@ def main():
     df["b0"] = b0
     df["b1"] = b1
 
-    X = "Hunger:Q"
+    # X = "Hunger:Q"
     x_domain = [-2.5, 2.5]  # figure x domain
     title_x = "Hunger (Raw)"
     # if predictor_scale == "Mean-center":
@@ -242,8 +242,8 @@ def main():
     # https://stackoverflow.com/questions/53287928/tooltips-in-altair-line-charts (haven't implemented it yet)
 
     fig_regline = fig_main.transform_regression(
-        x_col, y_col, extent=[-300, 300]
-    ).mark_line(size=3, color="#b73779")
+        x_col, y_col, extent=[-2.5, 2.5]
+    ).mark_line(size=7, color="#b73779")
     
     fig_regline.interactive()
 
@@ -276,6 +276,11 @@ def main():
 
     #%% Drawing plot
 
+    
+    if cluster != 0:
+        empty_data = pd.DataFrame()
+        fig_b0dot = alt.Chart(empty_data).mark_point()
+        fig_regline = alt.Chart(empty_data).mark_point()
     finalfig = fig_horizontal + fig_vertical + fig_regline + fig_b0dot + fig_main
     _, col_fig, _ = st.beta_columns([0.15, 0.5, 0.1])  # hack to center figure
     with col_fig:
