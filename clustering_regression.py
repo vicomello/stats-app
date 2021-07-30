@@ -1,6 +1,8 @@
 #%%
 
 from altair.vegalite.v4.schema.channels import Tooltip
+from pandas.core.frame import DataFrame
+from pingouin import regression
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -100,21 +102,22 @@ def main():
 
     #%% defining linear regression
     #df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-2, 2])})
-    df = pd.DataFrame({"Hunger": np.random.uniform(low=-2, high=2, size=(n,))})
+    df = pd.DataFrame({"Hunger": np.random.uniform(low=-1.2, high=1.2, size=(n,))})
     df["i"] = np.arange(1, df.shape[0] + 1)
     df["Hunger_Code"] = df["Hunger"]
     df["Happiness"] = utils.simulate_y(df[["Hunger"]], np.array([b0, b1]), noise)
     df["Mean_Happiness"] = df["Happiness"].mean()
-    df["Happiness_Centered"] = df["Happiness"] - df["Happiness"].mean()
-    df["Happiness_zscore"] = (df["Happiness"] - df["Mean_Happiness"]) / df["Happiness"].std()
+    #df["Happiness_Centered"] = df["Happiness"] - df["Happiness"].mean()
+    #df["Happiness_zscore"] = (df["Happiness"] - df["Mean_Happiness"]) / df["Happiness"].std()
     df["Mean_Hunger"] = df["Hunger"].mean()
-    df["Hunger_Centered"] = df["Hunger"] - df["Hunger"].mean()
-    df["Hunger_zscore"] = (df["Hunger"] - df["Mean_Hunger"]) / df["Hunger"].std()
+    #df["Hunger_Centered"] = df["Hunger"] - df["Hunger"].mean()
+    #df["Hunger_zscore"] = (df["Hunger"] - df["Mean_Hunger"]) / df["Hunger"].std()
     df["b0"] = b0
     df["b1"] = b1
+    df["one_sample"] = np.random.normal(b1, 17, n)
 
     # X = "Hunger:Q"
-    x_domain = [-2.5, 2.5]  # figure x domain
+    x_domain = [-1.5, 1.5]  # figure x domain
     title_x = "Hunger (Raw)"
     # if predictor_scale == "Mean-center":
     #     X = "Hunger_Centered:Q"
@@ -125,21 +128,33 @@ def main():
     #     x_domain = [i / 20 for i in x_domain]
     x_col = "Hunger"
 
+   
     if cluster == 1:
-        df["Hunger_Code"] = np.full((df.shape), 1)
+        c = 0
+        test = "one_sample"
     elif cluster == 2:
-        a = np.empty((df.shape[0],))
-        a[::2] = 1
-        a[1::2] = -1
-        df["Hunger_Code"] = a
+        c = np.empty((df.shape[0],))
+        c[::2] = 0.5
+        c[1::2] = -0.5
+        #test = "two_samples"
+        test = "one_sample"
     elif cluster == 3:
-        a = np.empty((df.shape[0],))
-        a[::3] = 1
-        a[1::3] = -1
-        a[2::3] = 0
-        df["Hunger_Code"] = a
-
-    Y = "Happiness:Q"
+        c = np.empty((df.shape[0],))
+        c[::3] = 0.5
+        c[1::3] = -0.5
+        c[2::3] = 0
+        #test = "anova"
+        test = "one_sample"
+    else:
+        c = df["Hunger"]
+        test = "Happiness"
+    df["Hunger_Code"] = c
+    
+    
+    #print(df["Happiness"].mean())
+    
+    name_test = [test, ":Q"]
+    Y = "".join(name_test)
     y_domain = [-100, 100]
     title_y = "Happiness (Raw)"
     # if outcome_scale == "Mean-center":
@@ -210,6 +225,7 @@ def main():
         df
 
     # TODO make it interactive;
+    # BUG make range between -1.5 and 1.5 (for some reason not working) 
     fig_main = (
         alt.Chart(df)
         .mark_circle(size=55, color="#3b528b", opacity=0.8)
@@ -238,11 +254,29 @@ def main():
     )
     fig_main.interactive()  # https://github.com/altair-viz/altair/issues/2159
 
+
+    #Figure for the main value (pink dot)
+    fig_mean = (
+        alt.Chart(df)
+        .mark_line(color="#FF69B4").encode(
+        y='b1:Q',
+        x='Hunger:Q',
+        size=alt.value(2)
+    )
+    )
+#     source = data.stocks()
+#     base = alt.Chart(source).properties(width=550)
+#     rule = base.mark_rule().encode(
+#     y='average(price)',
+#     color='symbol',
+#     size=alt.value(2)
+# )
+
     # TODO make line interactive (show tooltip model) 
     # https://stackoverflow.com/questions/53287928/tooltips-in-altair-line-charts (haven't implemented it yet)
 
     fig_regline = fig_main.transform_regression(
-        x_col, y_col, extent=[-2.5, 2.5]
+        x_col, y_col, extent=x_domain
     ).mark_line(size=7, color="#b73779")
     
     fig_regline.interactive()
@@ -258,30 +292,36 @@ def main():
 
     #%% Vertical Line
 
-    fig_vertical = (
-        alt.Chart(pd.DataFrame({"x": [0]}))
-        .mark_rule(size=2, color="#5ec962", opacity=0.8, strokeDash=[5, 5])
-        .encode(x=alt.X("x:Q", axis=alt.Axis(title="")))
-        .interactive()
-        # .properties(height=fig_height)
-    )
+    # fig_vertical = (
+    #     alt.Chart(pd.DataFrame({"x": [0]}))
+    #     .mark_rule(size=2, color="#5ec962", opacity=0.8, strokeDash=[5, 5])
+    #     .encode(x=alt.X("x:Q", axis=alt.Axis(title="")))
+    #     .interactive()
+    #     # .properties(height=fig_height)
+    # )
 
     df_intercept = pd.DataFrame({"x": [0], "y": [b0], "b0 (intercept)": [b0]})
-    fig_b0dot = (
-        alt.Chart(df_intercept)
-        .mark_point(size=89, fill="#51127c", color="#51127c")
-        .encode(x="x:Q", y="y:Q", tooltip=["b0 (intercept)"])
-        .interactive()
-    )
+    # fig_b0dot = (
+    #     alt.Chart(df_intercept)
+    #     .mark_point(size=89, fill="#51127c", color="#51127c")
+    #     .encode(x="x:Q", y="y:Q", tooltip=["b0 (intercept)"])
+    #     .interactive()
+    # )
 
     #%% Drawing plot
 
     
-    if cluster != 0:
-        empty_data = pd.DataFrame()
-        fig_b0dot = alt.Chart(empty_data).mark_point()
-        fig_regline = alt.Chart(empty_data).mark_point()
-    finalfig = fig_horizontal + fig_vertical + fig_regline + fig_b0dot + fig_main
+    # if cluster != 0:
+    #     empty_data = pd.DataFrame()
+    #     fig_b0dot = alt.Chart(empty_data).mark_point()
+    #     fig_regline = alt.Chart(empty_data).mark_point()
+    #finalfig = fig_horizontal + fig_vertical + fig_regline + fig_b0dot + fig_main
+    if cluster == 0:
+        finalfig =  fig_main + fig_horizontal + fig_regline
+    elif cluster == 1:
+        finalfig = fig_main + fig_horizontal  + fig_mean
+    else:
+        finalfig = fig_main
     _, col_fig, _ = st.beta_columns([0.15, 0.5, 0.1])  # hack to center figure
     with col_fig:
         st.altair_chart(finalfig, use_container_width=False)
@@ -304,8 +344,9 @@ def main():
     st.markdown("##### ")
     eq1 = "y_i = b_0 + b_1 x_i + \epsilon_i"
     st.latex(eq1)
+    # Why are b0 and b1 NOT 15 and -10?
     eq2 = (
-        eq1.replace("b_0", str(b0))
+        eq1.replace("b_0", str(b0)) 
         .replace("b_1", str(b1))
         .replace("y_i", "happiness_i")
         .replace("x_i", "\ hunger_i")
