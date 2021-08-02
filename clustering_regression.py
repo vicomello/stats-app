@@ -1,6 +1,6 @@
 #%%
 
-from altair.vegalite.v4.schema.channels import Tooltip
+from altair.vegalite.v4.schema.channels import Color, Tooltip
 from pandas.core.frame import DataFrame
 from pingouin import regression
 import streamlit as st
@@ -115,6 +115,10 @@ def main():
     df["b0"] = b0
     df["b1"] = b1
     df["one_sample"] = np.random.normal(b1, 17, n)
+    first_sample = pd.DataFrame(np.random.normal(20+b1, 5, int(n/2)))
+    second_sample = pd.DataFrame(np.random.normal(20, 5, int(n/2)))
+    # TODO: change 20 to variable
+    df["two_samples"] = first_sample.append(second_sample, ignore_index=True)
 
     # X = "Hunger:Q"
     x_domain = [-1.5, 1.5]  # figure x domain
@@ -133,13 +137,13 @@ def main():
         c = 0
         test = "one_sample"
     elif cluster == 2:
-        c = np.empty((df.shape[0],))
-        c[::2] = 0.5
-        c[1::2] = -0.5
+        c = pd.DataFrame(np.empty((df.shape[0],)))
+        c.iloc[:int(n/2), :] = 0.5
+        c.iloc[int(n/2):n, :] = -0.5
         #test = "two_samples"
-        test = "one_sample"
+        test = "two_samples"
     elif cluster == 3:
-        c = np.empty((df.shape[0],))
+        c = pd.DataFrame(np.empty((df.shape[0],)))
         c[::3] = 0.5
         c[1::3] = -0.5
         c[2::3] = 0
@@ -149,9 +153,10 @@ def main():
         c = df["Hunger"]
         test = "Happiness"
     df["Hunger_Code"] = c
+    print(df)
     
+    #df['two_samples_means'] = df.groupby(['Hunger_Code'])['two_samples'].transform('mean')
     
-    #print(df["Happiness"].mean())
     
     name_test = [test, ":Q"]
     Y = "".join(name_test)
@@ -264,6 +269,18 @@ def main():
         size=alt.value(2)
     )
     )
+
+    two_samples = df.groupby(['Hunger_Code']).mean()
+    
+    # TODO: change color of circles as well.
+    fig_two_samples = (
+        alt.Chart(df)
+        .mark_line(point=True, color="#FF69B4")
+        .encode(
+            y=alt.Y("mean(two_samples):Q"),
+            x=alt.X("Hunger_Code:Q")
+        )
+    )
 #     source = data.stocks()
 #     base = alt.Chart(source).properties(width=550)
 #     rule = base.mark_rule().encode(
@@ -320,8 +337,10 @@ def main():
         finalfig =  fig_main + fig_horizontal + fig_regline
     elif cluster == 1:
         finalfig = fig_main + fig_horizontal  + fig_mean
+    elif cluster == 2:
+        finalfig = fig_main + fig_horizontal + fig_two_samples
     else:
-        finalfig = fig_main
+        finalfig = fig_main + fig_horizontal # + fig_anova
     _, col_fig, _ = st.beta_columns([0.15, 0.5, 0.1])  # hack to center figure
     with col_fig:
         st.altair_chart(finalfig, use_container_width=False)
