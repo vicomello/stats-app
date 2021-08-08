@@ -86,19 +86,7 @@ def main():
 
     np.random.seed(int(n + b0 + b1 + noise))  # hack: freeze state
 
-    # st.sidebar.markdown("#### Rescale predictor (hunger)?")
-    # predictor_scale = st.sidebar.radio(
-    #     "", ("Use raw values", "Mean-center", "Z-score"), key="x"
-    # )
-
-    # st.sidebar.markdown("#### Rescale outcome (happiness)?")
-    # outcome_scale = st.sidebar.radio(
-    #     "", ("Use raw values", "Mean-center", "Z-score"), key="y"
-    # )
-
-    # if predictor_scale == "Z-score":
-    #     if outcome_scale == "Z-score":
-    #         st.sidebar.markdown("Outcome and predictor are z-scored. B1=correlation=Beta.")
+   
 
     #%% defining linear regression
     #df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-2, 2])})
@@ -120,16 +108,16 @@ def main():
     # TODO: change 20 to variable
     df["two_samples"] = first_sample.append(second_sample, ignore_index=True)
 
+    anova1 = pd.DataFrame(np.random.normal(20, 2.5, int(n/3)))
+    anova2 = pd.DataFrame(np.random.normal(20+(b1/2), 2.5, int(n/3)))
+    anova3 = pd.DataFrame(np.random.normal(20+b1, 2.5, int(n/3)))
+    anova = (anova1.append(anova2, ignore_index=True)).append(anova3, ignore_index=True)
+    df["anova"] = anova
+
+
     # X = "Hunger:Q"
     x_domain = [-1.5, 1.5]  # figure x domain
     title_x = "Hunger (Raw)"
-    # if predictor_scale == "Mean-center":
-    #     X = "Hunger_Centered:Q"
-    #     title_x = "Hunger Mean-Centered"
-    # elif predictor_scale == "Z-score":
-    #     X = "Hunger_zscore:Q"
-    #     title_x = "Hunger Z-Scored"
-    #     x_domain = [i / 20 for i in x_domain]
     x_col = "Hunger"
 
    
@@ -140,22 +128,18 @@ def main():
         c = pd.DataFrame(np.empty((df.shape[0],)))
         c.iloc[:int(n/2), :] = 0.5
         c.iloc[int(n/2):n, :] = -0.5
-        #test = "two_samples"
         test = "two_samples"
     elif cluster == 3:
         c = pd.DataFrame(np.empty((df.shape[0],)))
-        c[::3] = 0.5
-        c[1::3] = -0.5
-        c[2::3] = 0
-        #test = "anova"
-        test = "one_sample"
+        c.iloc[:int(n/3), :] = -0.5
+        c.iloc[int(n/3):int(2*n/3), :] = 0.0
+        c.iloc[int(2*n/3):n, :] = 0.5
+        test = "anova"
     else:
         c = df["Hunger"]
         test = "Happiness"
     df["Hunger_Code"] = c
     print(df)
-    
-    #df['two_samples_means'] = df.groupby(['Hunger_Code'])['two_samples'].transform('mean')
     
     
     name_test = [test, ":Q"]
@@ -244,21 +228,24 @@ def main():
                 scale=alt.Scale(domain=y_domain),
                 axis=alt.Axis(grid=False),
                 title=title_y,
-            ),
-            tooltip=[
-                "Hunger",
-                "Happiness",
-                "Predicted_Happiness",
-                "Residual",
-                "b1",
-                "b0",
-                "Model",
-            ],
+            ) #,
+            #tooltip=[
+            #    "Hunger",
+            #    "Happiness",
+            #    #"Predicted_Happiness",
+            #    "Residual",
+            #    "b1",
+            #    "b0",
+            #    "Model",
+            #],
         )
         .properties(height=377, width=377)
     )
+
     fig_main.interactive()  # https://github.com/altair-viz/altair/issues/2159
 
+    regression_line = fig_main.transform_regression('Hunger_Code', Y).mark_line(color="#FF69B4")
+    #TODO: Maked this regression line work!!
 
     #Figure for the main value (pink dot)
     fig_mean = (
@@ -270,17 +257,47 @@ def main():
     )
     )
 
-    two_samples = df.groupby(['Hunger_Code']).mean()
+    #two_samples = df.groupby(['Hunger_Code']).mean()
+
+    two_samples = alt.Chart(df).encode(
+        y=alt.Y("mean(two_samples):Q"),
+        x=alt.X("Hunger_Code:Q")
+    )
+    
+    two_samples_line = two_samples.mark_line(color="#FF69B4")
+    two_samples_point = two_samples.mark_point(filled=True, color="#FF69B4")
+
+    
     
     # TODO: change color of circles as well.
-    fig_two_samples = (
+    # fig_two_samples = (
+    #     alt.Chart(df)
+    #     .mark_line(point=True, color="#FF69B4")
+    #     .encode(
+    #         y=alt.Y("mean(two_samples):Q"),
+    #         x=alt.X("Hunger_Code:Q")
+    #     )
+    # )
+
+    # fig_two_samples_point = (
+    #     alt.Chart(df)
+    #     .mark_point(color="#FF69B4")
+    #     .encode(
+    #         y=alt.Y("mean(two_samples):Q"),
+    #         x=alt.X("Hunger_Code:Q")
+    #     )
+    # )
+
+    anova = (
         alt.Chart(df)
-        .mark_line(point=True, color="#FF69B4")
         .encode(
-            y=alt.Y("mean(two_samples):Q"),
+            y=alt.Y("mean(anova):Q"),
             x=alt.X("Hunger_Code:Q")
         )
     )
+
+    anova_line = anova.mark_line(color="#FF69B4")
+    anova_points = anova.mark_point(filled=True, color="#FF69B4")
 #     source = data.stocks()
 #     base = alt.Chart(source).properties(width=550)
 #     rule = base.mark_rule().encode(
@@ -292,12 +309,14 @@ def main():
     # TODO make line interactive (show tooltip model) 
     # https://stackoverflow.com/questions/53287928/tooltips-in-altair-line-charts (haven't implemented it yet)
 
-    fig_regline = fig_main.transform_regression(
-        x_col, y_col, extent=x_domain
-    ).mark_line(size=7, color="#b73779")
+    # fig_regline = fig_main.transform_regression(
+    #     x_col, y_col, extent=x_domain
+    # ).mark_line(size=7, color="#b73779")
     
-    fig_regline.interactive()
+    # fig_regline.interactive()
 
+    
+    
     #%% Horizontal line
 
     fig_horizontal = (
@@ -334,13 +353,13 @@ def main():
     #     fig_regline = alt.Chart(empty_data).mark_point()
     #finalfig = fig_horizontal + fig_vertical + fig_regline + fig_b0dot + fig_main
     if cluster == 0:
-        finalfig =  fig_main + fig_horizontal + fig_regline
+        finalfig =  fig_main + fig_horizontal + regression_line
     elif cluster == 1:
         finalfig = fig_main + fig_horizontal  + fig_mean
     elif cluster == 2:
-        finalfig = fig_main + fig_horizontal + fig_two_samples
+        finalfig = fig_main + fig_horizontal + two_samples_line + two_samples_point
     else:
-        finalfig = fig_main + fig_horizontal # + fig_anova
+        finalfig = fig_main + fig_horizontal + anova_line + anova_points
     _, col_fig, _ = st.beta_columns([0.15, 0.5, 0.1])  # hack to center figure
     with col_fig:
         st.altair_chart(finalfig, use_container_width=False)
