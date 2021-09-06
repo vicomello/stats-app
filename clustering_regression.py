@@ -83,78 +83,113 @@ def main():
     #noise = st.sidebar.slider(*slider_noise_params)
     noise = 7.5
     slider_noise_params[3] = noise
+    n = 30
+    b1 = 10
+    b0 = 10
 
     np.random.seed(int(n + b0 + b1 + noise))  # hack: freeze state
 
-   
-
     #%% defining linear regression
     #df = pd.DataFrame({"Hunger": utils.simulate_x(n, [-2, 2])})
-    df = pd.DataFrame({"Hunger": np.random.uniform(low=-1.2, high=1.2, size=(n,))})
-    df["i"] = np.arange(1, df.shape[0] + 1)
-    df["Hunger_Code"] = df["Hunger"]
-    df["Happiness"] = utils.simulate_y(df[["Hunger"]], np.array([b0, b1]), noise)
-    df["Mean_Happiness"] = df["Happiness"].mean()
-    #df["Happiness_Centered"] = df["Happiness"] - df["Happiness"].mean()
-    #df["Happiness_zscore"] = (df["Happiness"] - df["Mean_Happiness"]) / df["Happiness"].std()
-    df["Mean_Hunger"] = df["Hunger"].mean()
-    #df["Hunger_Centered"] = df["Hunger"] - df["Hunger"].mean()
-    #df["Hunger_zscore"] = (df["Hunger"] - df["Mean_Hunger"]) / df["Hunger"].std()
-    df["b0"] = b0
-    df["b1"] = b1
-    df["one_sample"] = np.random.normal(b1, 17, n)
-    first_sample = pd.DataFrame(np.random.normal(20+b1, 5, int(n/2)))
-    second_sample = pd.DataFrame(np.random.normal(20, 5, int(n/2)))
-    # TODO: change 20 to variable
-    df["two_samples"] = first_sample.append(second_sample, ignore_index=True)
-
-    anova1 = pd.DataFrame(np.random.normal(20, 2.5, int(n/3)))
-    anova2 = pd.DataFrame(np.random.normal(20+(b1/2), 2.5, int(n/3)))
-    anova3 = pd.DataFrame(np.random.normal(20+b1, 2.5, int(n/3)))
-    anova = (anova1.append(anova2, ignore_index=True)).append(anova3, ignore_index=True)
-    df["anova"] = anova
-
-
-    # X = "Hunger:Q"
-    x_domain = [-1.5, 1.5]  # figure x domain
-    title_x = "Hunger (Raw)"
-    x_col = "Hunger"
-
-   
+    
+    #%% x and y are defined dynamically depending on the number of clusters  selected
+    df=pd.DataFrame()
+    y1 = utils.rand_norm_fixed(n/3, 0, 2, decimals=2)
+    y2 = utils.rand_norm_fixed(n/3, 2.5, 2, decimals=2)
+    y3 = utils.rand_norm_fixed(n/3, 5, 2, decimals=2)
+    y_data = np.append(np.append(y1, y2), y3)
+    df["y"] = y_data
+    
     if cluster == 1:
         c = 0
         test = "one_sample"
+        y_data = y_data
     elif cluster == 2:
-        c = pd.DataFrame(np.empty((df.shape[0],)))
-        c.iloc[:int(n/2), :] = 0.5
-        c.iloc[int(n/2):n, :] = -0.5
+        x1 = np.repeat(-0.5, n/2)
+        x2 = np.repeat(0.5, n/2)
+        c = np.append(x1, x2)
+
+        y_data = y_data
+
         test = "two_samples"
     elif cluster == 3:
-        c = pd.DataFrame(np.empty((df.shape[0],)))
-        c.iloc[:int(n/3), :] = -0.5
-        c.iloc[int(n/3):int(2*n/3), :] = 0.0
-        c.iloc[int(2*n/3):n, :] = 0.5
+        x1 = np.repeat(-0.5, n/3)
+        x2 = np.repeat(0, n/3)
+        x3 = np.repeat(0.5, n/3)
+        c = np.append(np.append(x1, x2), x3)
         test = "anova"
+        y_data = y_data
     else:
-        c = df["Hunger"]
-        test = "Happiness"
-    df["Hunger_Code"] = c
-    print(df)
+        #x1 = np.repeat(-0.5, n/3)
+        x1 = utils.rand_norm_fixed(n/3, -0.5, .5, decimals=2)
+        x2 = utils.rand_norm_fixed(n/3, 0, .5, decimals=2)
+        x3 = utils.rand_norm_fixed(n/3, 0.5, .5, decimals=2)
+        c = np.append(np.append(x1, x2), x3)
+
+        y1 = utils.rand_norm_fixed(n/3, 0, 2, decimals=2)
+        y2 = utils.rand_norm_fixed(n/3, 2.5, 2, decimals=2)
+        y3 = utils.rand_norm_fixed(n/3, 5, 2, decimals=2)
+        y_data = np.append(np.append(y1, y2), y3)
+        
+    df["x"] = c
+    df["y"] = y_data
+    df["i"] = np.arange(1, df.shape[0] + 1)
+
+    x_domain = [-1.5, 1.5]
+    x_col = "y"
+    y_domain = [-10,10]
+    y_col = "y"
+
+
+    # df["x"]=c
+    #df["Hunger_Code"] = df["Hunger"]
+    #df["Happiness"] = utils.simulate_y(df[["Hunger"]], np.array([b0, b1]), noise)
+    #df["Mean_Happiness"] = df["Happiness"].mean()
+    #df["Happiness_Centered"] = df["Happiness"] - df["Happiness"].mean()
+    #df["Happiness_zscore"] = (df["Happiness"] - df["Mean_Happiness"]) / df["Happiness"].std()
+    #df["Mean_Hunger"] = df["Hunger"].mean()
+    #df["Hunger_Centered"] = df["Hunger"] - df["Hunger"].mean()
+    #df["Hunger_zscore"] = (df["Hunger"] - df["Mean_Hunger"]) / df["Hunger"].std()
+    #df["b0"] = b0
+    #df["b1"] = b1
+    #df["one_sample"] = np.random.normal(b1, 17, n)
+    #first_sample = pd.DataFrame(np.random.normal(20+b1, 5, int(n/2)))
+    #second_sample = pd.DataFrame(np.random.normal(20, 5, int(n/2)))
+    # TODO: change 20 to variable
+    #df["two_samples"] = first_sample.append(second_sample, ignore_index=True)
+
+    # anova1 = pd.DataFrame(np.random.normal(20, 2.5, int(n/3)))
+    # anova2 = pd.DataFrame(np.random.normal(20+(b1/2), 2.5, int(n/3)))
+    # anova3 = pd.DataFrame(np.random.normal(20+b1, 2.5, int(n/3)))
+    # anova = (anova1.append(anova2, ignore_index=True)).append(anova3, ignore_index=True)
+    # df["anova"] = anova
+
+
+
+    ### NEW DATA
     
     
-    name_test = [test, ":Q"]
-    Y = "".join(name_test)
-    y_domain = [-100, 100]
-    title_y = "Happiness (Raw)"
+
+
+
+    
+ 
+    
+    
+    # name_test = [test, ":Q"]
+    #X = "".join(name_test)
+    #Y = "y:Q"
+    #y_domain = [-100, 100]
+
     # if outcome_scale == "Mean-center":
     #     Y = "Happiness_Centered:Q"
     #     title_y = "Happiness Mean-Centered"
     # elif outcome_scale == "Z-score":
     #     Y = "Happiness_zscore:Q"
     #     title_y = "Happiness Z-Scored"
-    #     y_domain = [i / 20 for i in y_domain]
+
     # y_col = Y.replace(":Q", "")
-    y_col = "Happiness"
+    
 
     # TODO need to think about how to refactor the code below (too repetitive) (depends on how we want to present latex)
 
@@ -174,8 +209,8 @@ def main():
     # )
     # b0_zXY, b1_zXY = lm_zXY["coef"].round(2)
 
-    df["Predicted_Happiness"] = b0 + b1 * df[x_col]
-    df["Residual"] = df["Happiness"] - df["Predicted_Happiness"]
+    #df["Predicted_Happiness"] = b0 + b1 * df[x_col]
+    #df["Residual"] = df["Happiness"] - df["Predicted_Happiness"]
 
     # TODO pingouin correlation
 
@@ -190,93 +225,104 @@ def main():
     st.write("Lorem Ipsum dolor.")
 
     expander_df = st.beta_expander("Click here to see simulated data")
-    with expander_df:
-        # format dataframe output
-        fmt = {
-            "Hunger": "{:.2f}",  # TODO also show Hungercenterd, hungerzscore
-            "Happiness": "{:.2f}",
-            "Predicted_Happiness": "{:.2f}",
-            "Residual": "{:.2f}",
-        }
-        dfcols = [
-            "Hunger",
-            "Happiness",
-            "Predicted_Happiness",
-            "Residual",
-        ]  # cols to show
-        st.dataframe(df[dfcols].style.format(fmt), height=233)
+    # with expander_df:
+    #     # format dataframe output
+    #     fmt = {
+    #         "Hunger": "{:.2f}",  # TODO also show Hungercenterd, hungerzscore
+    #         "Happiness": "{:.2f}",
+    #         "Predicted_Happiness": "{:.2f}",
+    #         "Residual": "{:.2f}",
+    #     }
+    #     dfcols = [
+    #         "Hunger",
+    #         "Happiness",
+    #         "Predicted_Happiness",
+    #         "Residual",
+    #     ]  # cols to show
+    #     st.dataframe(df[dfcols].style.format(fmt), height=233)
 
     #%% interactive dots for model
-    for i in df.itertuples():
-        df.loc[
-            i.Index, "Model"
-        ] = f"{i.Happiness:.2f} = ({b0} + {b1} * {i.Hunger:.2f}) + {i.Residual:.2f}"
-        df
+    # for i in df.itertuples():
+    #     df.loc[
+    #         i.Index, "Model"
+    #     ] = f"{i.Happiness:.2f} = ({b0} + {b1} * {i.Hunger:.2f}) + {i.Residual:.2f}"
+    #     df
 
     # TODO make it interactive;
     # BUG make range between -1.5 and 1.5 (for some reason not working) 
-    fig_main = (
-        alt.Chart(df)
-        .mark_circle(size=55, color="#3b528b", opacity=0.8)
-        .encode(
-            x=alt.X("Hunger_Code:Q", 
-                scale=alt.Scale(domain=x_domain),
-                axis=alt.Axis(grid=False),
-                title=title_x),
-            y=alt.Y(
-                Y,
-                scale=alt.Scale(domain=y_domain),
-                axis=alt.Axis(grid=False),
-                title=title_y,
-            ) #,
-            #tooltip=[
-            #    "Hunger",
-            #    "Happiness",
-            #    #"Predicted_Happiness",
-            #    "Residual",
-            #    "b1",
-            #    "b0",
-            #    "Model",
-            #],
-        )
-        .properties(height=377, width=377)
-    )
+    
+    fig_main = alt.Chart(df).mark_circle(color="#3b528b").encode(
+        x=alt.X('x:Q', axis=alt.Axis(grid=False), scale=alt.Scale(domain=x_domain)),
+        y=alt.Y('y:Q', axis=alt.Axis(grid=False), scale=alt.Scale(domain=y_domain)),
+    ).properties(height=377, width=377)
+
+    regression_line = fig_main.transform_regression("x", "y").mark_line(color="#FF69B4")
+    
+    # fig_main = (
+    #     alt.Chart(df)
+    #     .mark_circle(size=55, color="#3b528b", opacity=0.8)
+    #     .encode(
+    #         x=alt.X(
+    #             "x:Q", 
+    #             scale=alt.Scale(domain=x_domain),
+    #             axis=alt.Axis(grid=False),
+    #             title=title_x),
+    #         y=alt.Y(
+    #             "y:Q",
+    #             scale=alt.Scale(domain=y_domain),
+    #             axis=alt.Axis(grid=False),
+    #             title=title_y,
+    #         ) #,
+    #         #tooltip=[
+    #         #    "Hunger",
+    #         #    "Happiness",
+    #         #    #"Predicted_Happiness",
+    #         #    "Residual",
+    #         #    "b1",
+    #         #    "b0",
+    #         #    "Model",
+    #         #],
+    #     )
+    #     .properties(height=377, width=377)
+    # )
 
     fig_main.interactive()  # https://github.com/altair-viz/altair/issues/2159
 
-    regression_line = fig_main.transform_regression('Hunger_Code', Y).mark_line(color="#FF69B4")
-    #TODO: Maked this regression line work!!
-
-    #Figure for the main value (pink dot)
+        #Figure for the mean for one sampled t test
     fig_mean = (
         alt.Chart(df)
         .mark_line(color="#FF69B4").encode(
-        y='b1:Q',
-        x='Hunger:Q',
-        size=alt.value(2)
+        y='average(y)',
+        x='x:Q',
     )
     )
+
+    one_sample_mean = alt.Chart(df).mark_line(color="#FF69B4").encode(
+        y='mean(y)',
+        x='x'
+    )
+
 
     #two_samples = df.groupby(['Hunger_Code']).mean()
 
-    two_samples = alt.Chart(df).encode(
-        y=alt.Y("mean(two_samples):Q"),
-        x=alt.X("Hunger_Code:Q")
-    )
+    # two_samples = alt.Chart(df).encode(
+    #     y=alt.Y("y:Q"),
+    #     x=alt.X("x:Q")
+    # )
     
-    two_samples_line = two_samples.mark_line(color="#FF69B4")
-    two_samples_point = two_samples.mark_point(filled=True, color="#FF69B4")
+    #two_samples_line = two_samples.mark_line(color="#FF69B4")
+    #two_samples_point = two_samples.mark_point(filled=True, color="#FF69B4")
 
-    anova = (
-        alt.Chart(df)
-        .encode(
-            y=alt.Y("mean(anova):Q"),
-            x=alt.X("Hunger_Code:Q")
-        )
-    )
+    # anova = (
+    #     alt.Chart(df)
+    #     .encode(
+    #         y=alt.Y("mean(anova):Q"),
+    #         x=alt.X("Hunger_Code:Q")
+    #     )
+    # )
 
-    anova_line = anova.mark_line(color="#FF69B4")
-    anova_points = anova.mark_point(filled=True, color="#FF69B4")
+    #anova_line = anova.mark_line(color="#FF69B4")
+    #anova_points = anova.mark_point(filled=True, color="#FF69B4")
 #     source = data.stocks()
 #     base = alt.Chart(source).properties(width=550)
 #     rule = base.mark_rule().encode(
@@ -288,11 +334,6 @@ def main():
     # TODO make line interactive (show tooltip model) 
     # https://stackoverflow.com/questions/53287928/tooltips-in-altair-line-charts (haven't implemented it yet)
 
-    # fig_regline = fig_main.transform_regression(
-    #     x_col, y_col, extent=x_domain
-    # ).mark_line(size=7, color="#b73779")
-    
-    # fig_regline.interactive()
 
     
     
@@ -315,7 +356,7 @@ def main():
     #     # .properties(height=fig_height)
     # )
 
-    df_intercept = pd.DataFrame({"x": [0], "y": [b0], "b0 (intercept)": [b0]})
+    #df_intercept = pd.DataFrame({"x": [0], "y": [b0], "b0 (intercept)": [b0]})
     # fig_b0dot = (
     #     alt.Chart(df_intercept)
     #     .mark_point(size=89, fill="#51127c", color="#51127c")
@@ -324,21 +365,26 @@ def main():
     # )
 
     #%% Drawing plot
+    #finalfig = fig_main + fig_mean + fig_horizontal
+    #st.altair_chart(finalfig)
+    #st.altair_chart(fig_main+fig_horizontal)
 
-    
-    # if cluster != 0:
-    #     empty_data = pd.DataFrame()
-    #     fig_b0dot = alt.Chart(empty_data).mark_point()
-    #     fig_regline = alt.Chart(empty_data).mark_point()
-    #finalfig = fig_horizontal + fig_vertical + fig_regline + fig_b0dot + fig_main
+    #if cluster != 0:
+        #empty_data = pd.DataFrame()
+        #fig_b0dot = alt.Chart(empty_data).mark_point()
+        #fig_regline = alt.Chart(empty_data).mark_point()
+        #finalfig = fig_horizontal + fig_vertical + fig_regline + fig_b0dot + fig_main
     if cluster == 0:
-        finalfig =  fig_main + fig_horizontal + regression_line
+        finalfig =  fig_main + fig_horizontal + regression_line #ok
     elif cluster == 1:
-        finalfig = fig_main + fig_horizontal  + fig_mean
+        finalfig =  fig_main + fig_horizontal + one_sample_mean
+        #finalfig = fig_main + fig_horizontal  + fig_mean
     elif cluster == 2:
-        finalfig = fig_main + fig_horizontal + two_samples_line + two_samples_point
+        finalfig =  fig_main + fig_horizontal
+        #finalfig = fig_main + fig_horizontal + two_samples_line + two_samples_point
     else:
-        finalfig = fig_main + fig_horizontal + anova_line + anova_points
+        finalfig =  fig_main + fig_horizontal
+        #finalfig = fig_main + fig_horizontal + anova_line + anova_points
     _, col_fig, _ = st.beta_columns([0.15, 0.5, 0.1])  # hack to center figure
     with col_fig:
         st.altair_chart(finalfig, use_container_width=False)
