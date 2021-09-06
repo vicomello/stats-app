@@ -267,27 +267,6 @@ def main():
     two_samples_line = two_samples.mark_line(color="#FF69B4")
     two_samples_point = two_samples.mark_point(filled=True, color="#FF69B4")
 
-    
-    
-    # TODO: change color of circles as well.
-    # fig_two_samples = (
-    #     alt.Chart(df)
-    #     .mark_line(point=True, color="#FF69B4")
-    #     .encode(
-    #         y=alt.Y("mean(two_samples):Q"),
-    #         x=alt.X("Hunger_Code:Q")
-    #     )
-    # )
-
-    # fig_two_samples_point = (
-    #     alt.Chart(df)
-    #     .mark_point(color="#FF69B4")
-    #     .encode(
-    #         y=alt.Y("mean(two_samples):Q"),
-    #         x=alt.X("Hunger_Code:Q")
-    #     )
-    # )
-
     anova = (
         alt.Chart(df)
         .encode(
@@ -379,10 +358,18 @@ def main():
         st.dataframe(lm[dfcols].style.format(fmt), height=233)
 
     #%% Writing GLM
-    st.markdown("##### ")
+    st.markdown("#####")
     eq1 = "y_i = b_0 + b_1 x_i + \epsilon_i"
     st.latex(eq1)
     # Why are b0 and b1 NOT 15 and -10?
+    
+    if cluster == 1:
+        st.latex("t = b_0 / se")
+    elif cluster == 2:
+        st.latex("t = ...")
+    elif cluster == 3:
+        st.latex("F = ...")
+
     eq2 = (
         eq1.replace("b_0", str(b0)) 
         .replace("b_1", str(b1))
