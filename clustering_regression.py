@@ -136,11 +136,11 @@ def main():
 
     # TODO need to think about how to refactor the code below (too repetitive) (depends on how we want to present latex)
 
-    lm = pg.linear_regression(df["x"], df["y"], add_intercept=True)
-    if cluster == 1:
-        b0 = lm["coef"][0].round(2)
-    else:
-        b0, b1 = lm["coef"].round(2)
+    #lm = pg.linear_regression(df["x"], df["y"], add_intercept=True)
+    #if cluster == 1:
+    #    b0 = lm["coef"][0].round(2)
+    #else:
+    #    b0, b1 = lm["coef"].round(2)
 
     # TODO pingouin correlation
 
@@ -294,7 +294,7 @@ def main():
         eq3 = eq3.replace(r"\beta_0", f"{b0}").replace(r"\beta_1", f"{b1}")
         st.latex(eq3)
 
-    corr = round(pg.corr(df["x"], df["y"]).r,2)
+    #corr = round(pg.corr(df["x"], df["y"]).r,2)
     #st.latex(f"correlation coefficient: {corr.values[0]}")  # TODO  insert correlation
     st.latex(r"\textrm{correlation coefficient (x, y)}: " + str(corr.values[0]))  # TODO  insert correlation
 

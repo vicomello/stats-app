@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import altair as alt
-import pingouin as pg
+# import pingouin as pg
 
 import utils
 
@@ -194,10 +194,10 @@ def main():
         st.altair_chart(finalfig, use_container_width=False)
     
     
-    lm = pg.linear_regression(df["Age"], df["Happiness"], add_intercept=True)
-    my_expander = st.beta_expander("Click here to see regression results")
-    with my_expander:
-        st.write(lm)
+    #lm = pg.linear_regression(df["Age"], df["Happiness"], add_intercept=True)
+    #my_expander = st.beta_expander("Click here to see regression results")
+    #with my_expander:
+    #    st.write(lm)
         
     #%% Writing GLM
     # st.markdown("##### ")

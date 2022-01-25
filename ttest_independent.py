@@ -3,7 +3,7 @@
 import altair as alt
 import numpy as np
 import pandas as pd
-import pingouin as pg
+#import pingouin as pg
 import streamlit as st
 
 import utils
@@ -178,7 +178,7 @@ def main():
         X = df_all[["Species_code_centered"]]
 
     y = df_all["Happiness"]
-    df_results = pg.linear_regression(X, y, add_intercept=True)
+    #df_results = pg.linear_regression(X, y, add_intercept=True)
     b0, b1 = df_results["coef"].round(2)
     df_all["b0"] = b0
     df_all["b1"] = b1
@@ -383,7 +383,7 @@ def main():
     #%% show dataframe
 
     #%% calculate t test to show to them
-    res = pg.ttest(df1["Happiness"], df2["Happiness"])
+    #res = pg.ttest(df1["Happiness"], df2["Happiness"])
     # df1["d"] = res["cohen-d"][0]
 
     #%% show t test results

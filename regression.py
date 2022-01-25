@@ -5,7 +5,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import altair as alt
-import pingouin as pg
+#import pingouin as pg
 
 import utils
 
@@ -114,8 +114,8 @@ def main():
 
     # TODO need to think about how to refactor the code below (too repetitive) (depends on how we want to present latex)
 
-    lm = pg.linear_regression(df[x_col], df[y_col], add_intercept=True)
-    b0, b1 = lm["coef"].round(2)
+    #lm = pg.linear_regression(df[x_col], df[y_col], add_intercept=True)
+    #b0, b1 = lm["coef"].round(2)
 
     # lm_raw = pg.linear_regression(df[["Hunger"]], df["Happiness"], add_intercept=True)
     # b0_raw, b1_raw = lm_raw["coef"].round(2)

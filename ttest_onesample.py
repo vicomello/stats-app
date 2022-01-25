@@ -3,7 +3,7 @@
 import altair as alt
 import numpy as np
 import pandas as pd
-import pingouin as pg
+#import pingouin as pg
 import streamlit as st
 
 import utils
@@ -62,7 +62,7 @@ def main():
         ] = f"{i.Happiness:.2f} = {i.Mean:.2f} + {i.Residual:.2f}"
 
     # t-test
-    res = pg.ttest(df1["Happiness"], 0)
+    #res = pg.ttest(df1["Happiness"], 0)
     df1["d"] = res["cohen-d"][0]
 
     # %% create figures
