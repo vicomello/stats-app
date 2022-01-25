@@ -21,15 +21,15 @@ st.set_page_config(
     page_icon="random",
 )
 #%% Sidebar that displays the pages
-
+#
 # The page names and the page files
 PAGES = {
-    # "Start here": home,
-    # "One-sample t-test": ttest_onesample,
-    # "Independent-samples t-test": ttest_independent,
-    #"Simple linear regression": regression,
+    "Start here": home,
+    "One-sample t-test": ttest_onesample,
+    "Independent-samples t-test": ttest_independent,
+    "Simple linear regression": regression,
     "Clustering Regression": clustering_regression,
-    # "Multiple linear regression": multiple_regression,
+    "Multiple linear regression": multiple_regression,
 }
 
 # Displaying the selection box
